@@ -225,6 +225,10 @@ class BattleRPG {
                 this.equipWeapon(weaponOption.dataset.weapon);
             });
         });
+
+        // ヘルプ機能
+        document.getElementById('help-btn').addEventListener('click', () => this.showHelp());
+        document.getElementById('help-back').addEventListener('click', () => this.hideHelp());
     }
 
     spawnNewEnemy() {
@@ -263,6 +267,9 @@ class BattleRPG {
         this.isPlayerTurn = true;
         this.player.isGuarding = false;
         this.player.combo = 0;
+        
+        // 傷口インジケーターを初期化
+        this.updateWoundIndicators();
     }
 
     playerAttack() {
@@ -541,6 +548,9 @@ class BattleRPG {
         // 防御力を再計算（累積効果）
         this.recalculateDefense();
         
+        // 視覚的インジケーター更新
+        this.updateWoundIndicators();
+        
         return appliedWounds;
     }
     
@@ -563,6 +573,38 @@ class BattleRPG {
         // 最低1は保持
         this.enemy.currentPhysicalDefense = Math.max(1, this.enemy.currentPhysicalDefense);
         this.enemy.currentMagicalDefense = Math.max(1, this.enemy.currentMagicalDefense);
+    }
+    
+    // 傷口インジケーター更新
+    updateWoundIndicators() {
+        if (!this.enemy || !this.enemy.wounds) return;
+        
+        // 傷口タイプの配列定義
+        const woundTypes = ['slash', 'blunt', 'pierce', 'fire', 'lightning', 'holy', 'ice'];
+        
+        woundTypes.forEach(woundType => {
+            const woundCount = this.enemy.wounds[woundType] || 0;
+            const indicator = document.getElementById(`${woundType}-wounds`);
+            
+            if (indicator) {
+                // 傷がある場合はアクティブ化
+                if (woundCount > 0) {
+                    indicator.classList.add('active');
+                    
+                    // 複数回の傷がある場合は数を表示
+                    if (woundCount > 1) {
+                        indicator.classList.add('multiple');
+                        indicator.setAttribute('data-count', woundCount);
+                    } else {
+                        indicator.classList.remove('multiple');
+                        indicator.removeAttribute('data-count');
+                    }
+                } else {
+                    indicator.classList.remove('active', 'multiple');
+                    indicator.removeAttribute('data-count');
+                }
+            }
+        });
     }
     
     // 弱点を考慮したダメージ計算（固定1.5倍）
@@ -1226,6 +1268,7 @@ class BattleRPG {
         this.hideShop();
         this.hideWeaponSelect();
         this.hideWeaponShop();
+        document.getElementById('help-screen').classList.add('hidden'); // ヘルプ画面も非表示
         this.showTown();
     }
 
@@ -1302,6 +1345,20 @@ class BattleRPG {
         this.updateUI(); // プレイヤースプライト更新
     }
 
+    // ヘルプ画面表示
+    showHelp() {
+        this.hideTown();
+        document.getElementById('help-screen').classList.remove('hidden');
+        this.logMessage('❓ システムガイドを表示しました。');
+    }
+
+    // ヘルプ画面非表示
+    hideHelp() {
+        document.getElementById('help-screen').classList.add('hidden');
+        this.showTown();
+        this.logMessage('🏘️ 街に戻りました。');
+    }
+
     // 武器屋システム
     showWeaponShop() {
         this.hideTown();
@@ -1312,6 +1369,10 @@ class BattleRPG {
 
     hideWeaponShop() {
         document.getElementById('weapon-shop-screen').classList.add('hidden');
+    }
+
+    hideHelpScreen() {
+        document.getElementById('help-screen').classList.add('hidden');
     }
 
     updateWeaponShopUI() {

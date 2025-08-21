@@ -68,6 +68,26 @@
                                     <span id="enemy-hp-text">60/60</span>
                                 </div>
                             </div>
+                            <!-- 傷口状態表示エリア -->
+                            <div id="wound-indicators" class="wound-display">
+                                <div id="physical-wounds" class="wound-category">
+                                    <span class="wound-label">物理傷:</span>
+                                    <div class="wound-icons">
+                                        <span id="slash-wounds" class="wound-indicator slash" title="斬撃傷">🩸</span>
+                                        <span id="blunt-wounds" class="wound-indicator blunt" title="打撃傷">🟤</span>
+                                        <span id="pierce-wounds" class="wound-indicator pierce" title="突き傷">🔴</span>
+                                    </div>
+                                </div>
+                                <div id="magical-wounds" class="wound-category">
+                                    <span class="wound-label">魔法傷:</span>
+                                    <div class="wound-icons">
+                                        <span id="fire-wounds" class="wound-indicator fire" title="炎傷">🔥</span>
+                                        <span id="lightning-wounds" class="wound-indicator lightning" title="雷傷">⚡</span>
+                                        <span id="holy-wounds" class="wound-indicator holy" title="聖傷">✨</span>
+                                        <span id="ice-wounds" class="wound-indicator ice" title="氷傷">❄️</span>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -172,6 +192,10 @@
                     <button id="town-save-btn" class="town-menu-btn save-menu">
                         💾 セーブ
                         <span class="btn-description">ゲーム進行状況を保存</span>
+                    </button>
+                    <button id="help-btn" class="town-menu-btn help-menu">
+                        ❓ システムガイド
+                        <span class="btn-description">戦闘システムの詳細説明</span>
                     </button>
                 </div>
                 
@@ -334,6 +358,102 @@
                 <div id="weapon-shop-controls">
                     <div id="weapon-shop-gold">💰 所持金: <span id="weapon-shop-current-gold">0</span>G</div>
                     <button id="weapon-shop-back" class="back-btn">街に戻る</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- システムガイド画面 -->
+        <div id="help-screen" class="screen hidden">
+            <div id="help-content">
+                <h2>⚔️ 戦闘システムガイド</h2>
+                
+                <div class="help-section">
+                    <h3>🎯 コンボシステム</h3>
+                    <div class="help-details">
+                        <div class="help-item">
+                            <strong>コンボの増加：</strong>
+                            <ul>
+                                <li>通常攻撃：+1</li>
+                                <li>スキル攻撃：+2</li>
+                            </ul>
+                        </div>
+                        <div class="help-item">
+                            <strong>コンボの効果：</strong>
+                            <ul>
+                                <li>クリティカル率 = 15% + コンボ数×5%</li>
+                                <li>最大コンボ5以上で戦闘終了時にボーナスゴールド（+20%）</li>
+                                <li>コンボ数に応じて攻撃音が高くなる</li>
+                            </ul>
+                        </div>
+                        <div class="help-item">
+                            <strong>コンボのリセット：</strong>
+                            <ul>
+                                <li>敵の攻撃を受ける（防御していない場合）</li>
+                                <li>新しい敵との戦闘開始時</li>
+                            </ul>
+                        </div>
+                        <div class="help-item">
+                            <strong>戦略のコツ：</strong>
+                            <ul>
+                                <li>🛡️防御でコンボを守りつつMP回復</li>
+                                <li>⚡スキルで効率的なコンボ蓄積</li>
+                                <li>高コンボ時は慎重に戦う</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="help-section">
+                    <h3>🩸 傷口システム</h3>
+                    <div class="help-details">
+                        <div class="help-item">
+                            <strong>弱点を突くと：</strong>
+                            <ul>
+                                <li>ダメージ1.5倍</li>
+                                <li>該当する傷が蓄積（20%防御減少）</li>
+                                <li>最大4回まで蓄積（80%減少上限）</li>
+                            </ul>
+                        </div>
+                        <div class="help-item">
+                            <strong>傷の種類：</strong>
+                            <ul>
+                                <li>物理傷：🩸斬撃、🟤打撃、🔴突き</li>
+                                <li>魔法傷：🔥炎、⚡雷、✨聖、❄️氷</li>
+                            </ul>
+                        </div>
+                        <div class="help-item">
+                            <strong>累積効果：</strong>
+                            <p>例：斬撃弱点に3回攻撃→ダメージが100→150→170→190と増加</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="help-section">
+                    <h3>⚔️ 武器システム</h3>
+                    <div class="help-details">
+                        <div class="help-item">
+                            <strong>武器の特徴：</strong>
+                            <ul>
+                                <li>各武器は固有の攻撃タイプと属性を持つ</li>
+                                <li>連続ヒット数と攻撃倍率が異なる</li>
+                                <li>武器屋で上位武器を購入可能</li>
+                            </ul>
+                        </div>
+                        <div class="help-item">
+                            <strong>弱点の見極め：</strong>
+                            <ul>
+                                <li>スライム：🩸斬撃に弱い</li>
+                                <li>ゴブリン：🟤打撃と🔥炎に弱い</li>
+                                <li>オーク：🔴突きと⚡雷に弱い</li>
+                                <li>ドラゴン：🟤打撃と🔴突きに弱い</li>
+                                <li>デーモン：🩸斬撃と✨聖に弱い</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="help-controls">
+                    <button id="help-back" class="back-btn">街に戻る</button>
                 </div>
             </div>
         </div>
