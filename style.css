@@ -1,0 +1,669 @@
+/* リセットとベーススタイル */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+    color: #fff;
+    overflow-x: hidden;
+    min-height: 100vh;
+}
+
+#game-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* ヘッダー */
+#game-header {
+    background: rgba(0, 0, 0, 0.3);
+    padding: 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 2px solid #4a90e2;
+}
+
+#game-header h1 {
+    font-size: 1.8rem;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+#game-stats {
+    display: flex;
+    gap: 2rem;
+    font-weight: bold;
+}
+
+/* メインゲーム画面 */
+#game-main {
+    flex: 1;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+/* 戦闘アリーナ */
+#battle-arena {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: linear-gradient(45deg, #2c1810 0%, #5d4037 50%, #3e2723 100%);
+    border-radius: 15px;
+    padding: 2rem;
+    box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.5);
+    position: relative;
+    min-height: 300px;
+}
+
+.battle-side {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+}
+
+#player-side {
+    animation: slideInLeft 0.8s ease-out;
+}
+
+#enemy-side {
+    animation: slideInRight 0.8s ease-out;
+}
+
+/* キャラクター */
+.character {
+    text-align: center;
+    position: relative;
+}
+
+.character-sprite {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    display: inline-block;
+    transition: all 0.3s ease;
+}
+
+.character-sprite:hover {
+    transform: scale(1.1);
+}
+
+.character.attacking {
+    animation: attackShake 0.6s ease;
+}
+
+.character.damaged {
+    animation: damageFlash 0.4s ease;
+}
+
+.character.guarding {
+    animation: guardGlow 1s ease;
+}
+
+.character-info h3 {
+    margin-bottom: 0.5rem;
+    font-size: 1.2rem;
+}
+
+/* HPバー・MPバー */
+.hp-bar, .mp-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.3rem;
+}
+
+.bar-label {
+    font-weight: bold;
+    min-width: 30px;
+    font-size: 0.9rem;
+}
+
+.bar-container {
+    background: rgba(0, 0, 0, 0.5);
+    border-radius: 10px;
+    padding: 2px;
+    min-width: 150px;
+    position: relative;
+}
+
+.bar {
+    height: 20px;
+    border-radius: 8px;
+    transition: width 0.5s ease, background-color 0.3s ease;
+    position: relative;
+}
+
+.hp-bar-fill {
+    background: linear-gradient(90deg, #e74c3c 0%, #c0392b 100%);
+    width: 100%;
+}
+
+.mp-bar-fill {
+    background: linear-gradient(90deg, #3498db 0%, #2980b9 100%);
+    width: 100%;
+}
+
+.bar-container span {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 0.8rem;
+    font-weight: bold;
+    color: #fff;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
+}
+
+/* VS表示 */
+#vs-indicator {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 10;
+}
+
+.vs-text {
+    font-size: 3rem;
+    font-weight: bold;
+    color: #ff6b35;
+    text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.7);
+    animation: vsGlow 2s infinite alternate;
+}
+
+/* ダメージ表示エリア */
+#damage-area {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 1000;
+}
+
+.damage-number {
+    position: absolute;
+    font-size: 2rem;
+    font-weight: bold;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+    animation: damageFloat 1.5s ease-out forwards;
+}
+
+.damage-number.critical {
+    font-size: 3rem;
+    color: #ff4757;
+    animation: criticalFloat 1.8s ease-out forwards;
+}
+
+.damage-number.heal {
+    color: #2ed573;
+}
+
+/* エフェクトエリア */
+#effect-area {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 999;
+}
+
+.effect {
+    position: absolute;
+    font-size: 4rem;
+    animation: effectBurst 1s ease-out forwards;
+}
+
+/* 戦闘ログ */
+#battle-log {
+    background: rgba(0, 0, 0, 0.7);
+    border-radius: 10px;
+    padding: 1rem;
+    max-height: 120px;
+    overflow-y: auto;
+    border: 2px solid #4a90e2;
+}
+
+#log-content p {
+    margin-bottom: 0.3rem;
+    animation: logSlideIn 0.3s ease-out;
+}
+
+/* コントロールパネル */
+#control-panel {
+    position: relative;
+}
+
+#action-buttons {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.action-btn {
+    padding: 1rem;
+    border: none;
+    border-radius: 10px;
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.action-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    transition: left 0.5s ease;
+}
+
+.action-btn:hover::before {
+    left: 100%;
+}
+
+.action-btn.attack {
+    background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+    color: white;
+}
+
+.action-btn.skill {
+    background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%);
+    color: white;
+}
+
+.action-btn.guard {
+    background: linear-gradient(135deg, #34495e 0%, #2c3e50 100%);
+    color: white;
+}
+
+.action-btn.item {
+    background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
+    color: white;
+}
+
+.action-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
+
+.action-btn:active {
+    transform: translateY(0);
+}
+
+.action-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* アクションパネル */
+.action-panel {
+    position: absolute;
+    bottom: 100%;
+    left: 0;
+    right: 0;
+    background: rgba(0, 0, 0, 0.9);
+    border-radius: 10px;
+    padding: 1rem;
+    border: 2px solid #4a90e2;
+    animation: panelSlideUp 0.3s ease-out;
+}
+
+.action-panel h4 {
+    margin-bottom: 1rem;
+    text-align: center;
+    color: #4a90e2;
+}
+
+.skill-grid, .item-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.skill-option, .item-option {
+    padding: 0.8rem;
+    border: none;
+    border-radius: 5px;
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.skill-option:hover, .item-option:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: translateY(-1px);
+}
+
+.back-btn {
+    width: 100%;
+    padding: 0.8rem;
+    border: none;
+    border-radius: 5px;
+    background: #e74c3c;
+    color: white;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+/* 結果画面 */
+.screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 2000;
+}
+
+.screen.hidden {
+    display: none;
+}
+
+#result-content {
+    background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+    padding: 3rem;
+    border-radius: 20px;
+    text-align: center;
+    border: 3px solid #4a90e2;
+    max-width: 400px;
+    animation: resultPopIn 0.5s ease-out;
+}
+
+#result-content h2 {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+    color: #4a90e2;
+}
+
+#result-content p {
+    margin-bottom: 1rem;
+    font-size: 1.1rem;
+}
+
+#result-rewards {
+    background: rgba(0, 0, 0, 0.3);
+    padding: 1rem;
+    border-radius: 10px;
+    margin: 1.5rem 0;
+}
+
+.result-btn {
+    padding: 1rem 2rem;
+    margin: 0.5rem;
+    border: none;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #4a90e2 0%, #357abd 100%);
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.result-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
+
+/* アニメーション */
+@keyframes slideInLeft {
+    from { transform: translateX(-100px); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes slideInRight {
+    from { transform: translateX(100px); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes attackShake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-10px) scale(1.1); }
+    75% { transform: translateX(10px) scale(1.1); }
+}
+
+@keyframes damageFlash {
+    0%, 100% { filter: brightness(1); }
+    50% { filter: brightness(2) hue-rotate(180deg); }
+}
+
+@keyframes guardGlow {
+    0%, 100% { box-shadow: none; }
+    50% { box-shadow: 0 0 30px rgba(52, 152, 219, 0.8); }
+}
+
+@keyframes vsGlow {
+    from { text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.7), 0 0 10px #ff6b35; }
+    to { text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.7), 0 0 30px #ff6b35, 0 0 40px #ff6b35; }
+}
+
+@keyframes damageFloat {
+    0% { transform: translateY(0) scale(0.5); opacity: 1; }
+    50% { transform: translateY(-50px) scale(1.2); opacity: 1; }
+    100% { transform: translateY(-100px) scale(1); opacity: 0; }
+}
+
+@keyframes criticalFloat {
+    0% { transform: translateY(0) scale(0.5) rotate(0deg); opacity: 1; }
+    25% { transform: translateY(-30px) scale(1.5) rotate(10deg); opacity: 1; }
+    50% { transform: translateY(-60px) scale(1.3) rotate(-10deg); opacity: 1; }
+    100% { transform: translateY(-120px) scale(1) rotate(0deg); opacity: 0; }
+}
+
+@keyframes effectBurst {
+    0% { transform: scale(0.1); opacity: 1; }
+    50% { transform: scale(1.2); opacity: 0.8; }
+    100% { transform: scale(2); opacity: 0; }
+}
+
+@keyframes logSlideIn {
+    from { transform: translateX(-20px); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes panelSlideUp {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes resultPopIn {
+    0% { transform: scale(0.5) rotate(10deg); opacity: 0; }
+    70% { transform: scale(1.1) rotate(-5deg); opacity: 1; }
+    100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+
+/* 隠しクラス */
+.hidden {
+    display: none !important;
+}
+
+/* 追加エフェクト */
+.combo-indicator {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%);
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-weight: bold;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    animation: comboPulse 0.5s ease-out;
+}
+
+.combo-indicator.hidden {
+    display: none;
+}
+
+@keyframes comboPulse {
+    0% { transform: scale(0.8); }
+    50% { transform: scale(1.2); }
+    100% { transform: scale(1); }
+}
+
+/* HP/MP バーの改善 */
+.bar-container {
+    position: relative;
+    overflow: hidden;
+}
+
+.bar-container::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    animation: barShimmer 2s infinite;
+}
+
+@keyframes barShimmer {
+    0% { left: -100%; }
+    100% { left: 100%; }
+}
+
+/* ボタンのパルス効果 */
+.action-btn.highlighted {
+    animation: buttonPulse 1s infinite;
+}
+
+@keyframes buttonPulse {
+    0%, 100% { box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3); }
+    50% { box-shadow: 0 4px 25px rgba(74, 144, 226, 0.6); }
+}
+
+/* 低HP警告 */
+.character.low-hp .character-sprite {
+    animation: lowHpFlash 1s infinite;
+}
+
+@keyframes lowHpFlash {
+    0%, 100% { filter: brightness(1); }
+    50% { filter: brightness(1.5) hue-rotate(0deg); }
+}
+
+/* コンボ表示の改善 */
+.combo-display {
+    position: absolute;
+    top: -30px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%);
+    color: white;
+    padding: 0.3rem 0.8rem;
+    border-radius: 15px;
+    font-size: 0.8rem;
+    font-weight: bold;
+    animation: comboFloat 0.8s ease-out;
+}
+
+@keyframes comboFloat {
+    0% { transform: translateX(-50%) translateY(10px) scale(0.5); opacity: 0; }
+    50% { transform: translateX(-50%) translateY(-10px) scale(1.2); opacity: 1; }
+    100% { transform: translateX(-50%) translateY(-30px) scale(1); opacity: 0; }
+}
+
+/* レスポンシブ対応 */
+@media (max-width: 768px) {
+    #game-header {
+        flex-direction: column;
+        gap: 1rem;
+        text-align: center;
+    }
+    
+    #game-stats {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    #battle-arena {
+        flex-direction: column;
+        gap: 2rem;
+        padding: 1rem;
+    }
+    
+    .character-sprite {
+        font-size: 3rem;
+    }
+    
+    .vs-text {
+        font-size: 2rem;
+    }
+    
+    #action-buttons {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .skill-grid, .item-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .combo-indicator {
+        top: 5px;
+        right: 5px;
+        padding: 0.3rem 0.6rem;
+        font-size: 0.9rem;
+    }
+}
+
+/* ダークモード対応 */
+@media (prefers-color-scheme: dark) {
+    body {
+        background: linear-gradient(135deg, #0f1419 0%, #1a1f29 100%);
+    }
+    
+    #battle-arena {
+        background: linear-gradient(45deg, #1a1a1a 0%, #2d2d2d 50%, #1a1a1a 100%);
+    }
+    
+    #battle-log {
+        background: rgba(0, 0, 0, 0.8);
+        border-color: #4a90e2;
+    }
+}
+
+/* パフォーマンス最適化 */
+.character-sprite,
+.damage-number,
+.effect {
+    will-change: transform;
+    backface-visibility: hidden;
+}
+
+.bar {
+    will-change: width;
+}
+
+/* アクセシビリティ */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}

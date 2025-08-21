@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Epic Battle RPG - 爽快戦闘システム</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="game-container">
+        <!-- ヘッダー -->
+        <header id="game-header">
+            <h1>⚔️ Epic Battle RPG</h1>
+            <div id="game-stats">
+                <span id="score">Score: 0</span>
+                <span id="level">Level: 1</span>
+                <span id="exp">EXP: 0/100</span>
+            </div>
+        </header>
+
+        <!-- メインゲーム画面 -->
+        <main id="game-main">
+            <!-- 戦闘画面 -->
+            <div id="battle-arena">
+                <!-- プレイヤー側 -->
+                <div id="player-side" class="battle-side">
+                    <div id="player-character" class="character">
+                        <div class="character-sprite">🛡️</div>
+                        <div class="character-info">
+                            <h3 id="player-name">勇者</h3>
+                            <div class="hp-bar">
+                                <div class="bar-label">HP</div>
+                                <div class="bar-container">
+                                    <div id="player-hp-bar" class="bar hp-bar-fill"></div>
+                                    <span id="player-hp-text">100/100</span>
+                                </div>
+                            </div>
+                            <div class="mp-bar">
+                                <div class="bar-label">MP</div>
+                                <div class="bar-container">
+                                    <div id="player-mp-bar" class="bar mp-bar-fill"></div>
+                                    <span id="player-mp-text">50/50</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- VS表示 -->
+                <div id="vs-indicator">
+                    <div class="vs-text">VS</div>
+                </div>
+
+                <!-- 敵側 -->
+                <div id="enemy-side" class="battle-side">
+                    <div id="enemy-character" class="character">
+                        <div class="character-sprite">👹</div>
+                        <div class="character-info">
+                            <h3 id="enemy-name">スライム</h3>
+                            <div class="hp-bar">
+                                <div class="bar-label">HP</div>
+                                <div class="bar-container">
+                                    <div id="enemy-hp-bar" class="bar hp-bar-fill"></div>
+                                    <span id="enemy-hp-text">60/60</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ダメージ表示エリア -->
+            <div id="damage-area"></div>
+
+            <!-- エフェクト表示エリア -->
+            <div id="effect-area"></div>
+
+            <!-- 戦闘ログ -->
+            <div id="battle-log">
+                <div id="log-content">
+                    <p>戦闘開始！勇敢な戦士よ、立ち上がれ！</p>
+                </div>
+            </div>
+
+            <!-- コントロールパネル -->
+            <div id="control-panel">
+                <div id="action-buttons">
+                    <button id="attack-btn" class="action-btn attack">
+                        ⚔️ 攻撃
+                    </button>
+                    <button id="skill-btn" class="action-btn skill">
+                        ✨ スキル
+                    </button>
+                    <button id="guard-btn" class="action-btn guard">
+                        🛡️ 防御
+                    </button>
+                    <button id="item-btn" class="action-btn item">
+                        🧪 アイテム
+                    </button>
+                </div>
+
+                <!-- スキル選択パネル -->
+                <div id="skill-panel" class="action-panel hidden">
+                    <h4>スキル選択</h4>
+                    <div class="skill-grid">
+                        <button class="skill-option" data-skill="fire">🔥 ファイア (MP: 10)</button>
+                        <button class="skill-option" data-skill="heal">💚 ヒール (MP: 15)</button>
+                        <button class="skill-option" data-skill="thunder">⚡ サンダー (MP: 20)</button>
+                        <button class="skill-option" data-skill="critical">💥 クリティカル (MP: 25)</button>
+                    </div>
+                    <button id="skill-back" class="back-btn">戻る</button>
+                </div>
+
+                <!-- アイテム選択パネル -->
+                <div id="item-panel" class="action-panel hidden">
+                    <h4>アイテム選択</h4>
+                    <div class="item-grid">
+                        <button class="item-option" data-item="potion">🧪 ポーション (HP+30)</button>
+                        <button class="item-option" data-item="mana">💙 マナポーション (MP+20)</button>
+                        <button class="item-option" data-item="bomb">💣 爆弾 (大ダメージ)</button>
+                    </div>
+                    <button id="item-back" class="back-btn">戻る</button>
+                </div>
+            </div>
+        </main>
+
+        <!-- ゲームオーバー・勝利画面 -->
+        <div id="result-screen" class="screen hidden">
+            <div id="result-content">
+                <h2 id="result-title">勝利！</h2>
+                <p id="result-message">見事な戦いでした！</p>
+                <div id="result-rewards">
+                    <p>獲得EXP: <span id="gained-exp">50</span></p>
+                    <p>獲得ゴールド: <span id="gained-gold">100</span></p>
+                </div>
+                <button id="next-battle-btn" class="result-btn">次の戦闘</button>
+                <button id="restart-btn" class="result-btn">最初から</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="sound.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
