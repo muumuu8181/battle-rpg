@@ -558,12 +558,21 @@ class BattleRPG {
     recalculateDefense() {
         if (!this.enemy) return;
         
+        // 敵のwoundsプロパティを安全確保
+        if (!this.enemy.wounds) {
+            console.warn('recalculateDefense: enemy.wounds is undefined, initializing...');
+            this.enemy.wounds = {
+                slash: 0, blunt: 0, pierce: 0,
+                fire: 0, lightning: 0, holy: 0, ice: 0
+            };
+        }
+        
         // 物理系傷口の累積効果
-        const physicalWounds = this.enemy.wounds.slash + this.enemy.wounds.blunt + this.enemy.wounds.pierce;
+        const physicalWounds = (this.enemy.wounds.slash || 0) + (this.enemy.wounds.blunt || 0) + (this.enemy.wounds.pierce || 0);
         const physicalReduction = Math.min(physicalWounds * 0.2, 0.8); // 最大80%減少
         
         // 魔法系傷口の累積効果  
-        const magicalWounds = this.enemy.wounds.fire + this.enemy.wounds.lightning + this.enemy.wounds.holy + this.enemy.wounds.ice;
+        const magicalWounds = (this.enemy.wounds.fire || 0) + (this.enemy.wounds.lightning || 0) + (this.enemy.wounds.holy || 0) + (this.enemy.wounds.ice || 0);
         const magicalReduction = Math.min(magicalWounds * 0.2, 0.8); // 最大80%減少
         
         // 現在の防御力を更新
@@ -577,7 +586,16 @@ class BattleRPG {
     
     // 傷口インジケーター更新
     updateWoundIndicators() {
-        if (!this.enemy || !this.enemy.wounds) return;
+        if (!this.enemy) return;
+        
+        // 敵のwoundsプロパティを安全確保
+        if (!this.enemy.wounds) {
+            console.warn('updateWoundIndicators: enemy.wounds is undefined, initializing...');
+            this.enemy.wounds = {
+                slash: 0, blunt: 0, pierce: 0,
+                fire: 0, lightning: 0, holy: 0, ice: 0
+            };
+        }
         
         // 傷口タイプの配列定義
         const woundTypes = ['slash', 'blunt', 'pierce', 'fire', 'lightning', 'holy', 'ice'];
@@ -1078,9 +1096,30 @@ class BattleRPG {
 
             // 敵が存在する場合の処理
             if (this.enemy) {
+                // 敵のwoundsプロパティを安全に初期化（セーブデータに含まれていない場合）
+                if (!this.enemy.wounds) {
+                    this.enemy.wounds = {
+                        slash: 0, blunt: 0, pierce: 0,
+                        fire: 0, lightning: 0, holy: 0, ice: 0
+                    };
+                    console.warn('Enemy wounds were missing, initialized to defaults');
+                }
+                
+                // 防御力のベース値も確保
+                if (!this.enemy.basePhysicalDefense) {
+                    this.enemy.basePhysicalDefense = this.enemy.defense || 5;
+                    this.enemy.baseMagicalDefense = this.enemy.defense || 5;
+                    this.enemy.currentPhysicalDefense = this.enemy.basePhysicalDefense;
+                    this.enemy.currentMagicalDefense = this.enemy.baseMagicalDefense;
+                    console.warn('Enemy defense values were missing, initialized from base defense');
+                }
+                
                 document.getElementById('enemy-name').textContent = this.enemy.name;
                 document.querySelector('#enemy-character .character-sprite').textContent = this.enemy.sprite;
                 this.isBattleActive = true;
+                
+                // 傷口インジケーターを更新
+                this.updateWoundIndicators();
             } else {
                 this.spawnNewEnemy();
             }
