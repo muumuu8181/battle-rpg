@@ -222,5 +222,256 @@ const weaponAttack = Math.floor(this.player.attack * weapon.attackMultiplier);
 
 ---
 
+## 🎮 Case Study #2: Epic Battle RPG - 画面状態復元とテストケース設計の改善
+
+### **発生日時**: 2025-08-21 
+### **プロジェクト**: Epic Battle RPG v0.38-v0.41
+### **症状**: 1) 街でセーブしても戦闘画面から開始 2) ロード後の操作エラー
+
+---
+
+### 🚨 **実際に発生した問題**
+
+#### **ユーザー報告の内容**
+```
+「ロードした瞬間に、まず戦闘画面になってるのが多分おかしくて。
+相手のヒットポイントがゼロの状態からスタートした。
+街でセーブしてるんだから、町からスタートでよくない？」
+```
+
+#### **技術的エラー**
+```javascript
+script.js:562  Uncaught TypeError: Cannot read properties of undefined (reading 'slash')
+script.js:562  Uncaught TypeError: Cannot read properties of undefined (reading 'slash')
+(繰り返し発生)
+```
+
+---
+
+### 🔍 **根本原因の複合的分析**
+
+#### **問題1: 画面状態の保存・復元不備**
+```javascript
+// 問題のあったコード - セーブ時
+const saveData = {
+    gameState: this.gameState,
+    player: this.player,
+    items: this.items,
+    enemy: this.enemy,
+    // 画面状態が保存されていない！
+};
+```
+
+```javascript
+// 問題のあったコード - ロード時
+if (this.enemy) {
+    // 敵が存在する場合は常に戦闘画面を表示
+    this.isBattleActive = true;
+    // 実際に街でセーブしていても戦闘画面になってしまう
+}
+```
+
+#### **問題2: 敵データの不完全復元**
+```javascript
+// 敵データ復元時の問題
+this.enemy = saveData.enemy;
+// ↑ 古いセーブデータにはwoundsプロパティが含まれていない
+
+// その後の処理でエラー発生
+const physicalWounds = this.enemy.wounds.slash + ...;  // undefined.slash
+```
+
+---
+
+### 🎭 **テスト設計の根本的問題点**
+
+#### **❌ 従来のテストの限界**
+
+```javascript
+// 既存テスト - 機能は確認済み
+test('💾 Save/Load buttons work', async ({ page }) => {
+    await saveBtn.click();
+    await loadBtn.click();
+    // → セーブ・ロード機能自体は動作している
+});
+```
+
+**なぜ問題を検出できなかったか:**
+1. **表面的な機能確認**: ボタンが押せることは確認済み
+2. **画面状態の軽視**: セーブ・ロード後の画面状態は未確認
+3. **現実的シナリオ不足**: 実際のユーザー操作フローを模倣していない
+
+#### **❌ 「緑のテスト症候群」**
+- ✅ GitHub Actions: 全テスト成功
+- ❌ 実際のブラウザ: 複数の重大な問題発生
+- **結果**: 「CI/CDは通るが実際は動かない」状況
+
+---
+
+### 🎯 **問題解決のアプローチ改善**
+
+#### **従来の対応パターン（問題あり）**
+```
+1. コードを修正
+2. 「修正完了」と報告
+3. テストを実行せずに確信
+```
+
+#### **今回採用した改善パターン**
+```
+1. ユーザー報告の詳細分析
+2. 実際のエラーログ確認  
+3. 問題を再現する現実的テストケース作成
+4. 修正とテストケースの同時実装
+5. 実際の動作確認を依頼
+```
+
+---
+
+### ✅ **実装した解決策**
+
+#### **1. 画面状態の完全保存・復元**
+
+```javascript
+// 修正後のセーブ処理
+const saveData = {
+    // ... 既存データ
+    battleState: {
+        isBattleActive: this.isBattleActive,
+        isPlayerTurn: this.isPlayerTurn,
+        currentScreen: currentScreen  // 現在の画面状態を判定・保存
+    }
+};
+```
+
+```javascript
+// 修正後のロード処理
+if (saveData.battleState) {
+    // 保存された画面状態を復元
+    const currentScreen = saveData.battleState.currentScreen || 'town';
+    
+    switch (currentScreen) {
+        case 'town':
+            this.showTownScreen();
+            break;
+        // ... 他の画面も適切に復元
+    }
+} else {
+    // 旧バージョンセーブデータは街画面から開始
+    this.showTownScreen();
+}
+```
+
+#### **2. 防御的プログラミングの強化**
+
+```javascript
+// 修正後の安全な敵データ復元
+if (this.enemy) {
+    // 敵のwoundsプロパティを安全に初期化
+    if (!this.enemy.wounds) {
+        this.enemy.wounds = {
+            slash: 0, blunt: 0, pierce: 0,
+            fire: 0, lightning: 0, holy: 0, ice: 0
+        };
+        console.warn('Enemy wounds were missing, initialized to defaults');
+    }
+}
+```
+
+#### **3. 現実的テストケースの追加**
+
+```javascript
+test('🏘️ Town Save-Load Screen State Preservation', async ({ page }) => {
+    // 実際の問題を模倣
+    await page.locator('#town-btn').click();        // 街に移動
+    await page.locator('#town-save-btn').click();   // 街でセーブ
+    await page.locator('#load-btn').click();        // ロード
+    
+    // 街画面から開始されることを確認
+    await expect(townScreen).not.toHaveClass(/hidden/);
+});
+
+test('🎯 Realistic Battle Scenario', async ({ page }) => {
+    // 複合的な状態遷移テスト
+    // 戦闘→街→武器変更→戦闘→セーブ→ロード→攻撃
+    // より現実的なユーザー操作フローを模倣
+});
+```
+
+---
+
+### 📊 **改善効果の測定**
+
+#### **修正前の状況**
+- ✅ **GitHub Actions**: 全テスト成功
+- ❌ **実際の動作**: 複数の重大な問題
+- ❌ **ユーザー体験**: フラストレーション発生
+
+#### **修正後の期待効果**
+- ✅ **GitHub Actions**: より現実的な問題も検出
+- ✅ **実際の動作**: 期待通りの動作
+- ✅ **ユーザー体験**: スムーズなゲーム体験
+
+---
+
+### 🎓 **この事例から学べる重要な教訓**
+
+#### **テスト設計での学び**
+1. **機能単体テストの限界**: ボタンが押せる ≠ 期待通りに動作する
+2. **現実的シナリオの重要性**: 実際のユーザー操作フローの模倣が必須
+3. **状態の複雑性**: 複数の状態変更を経た後の動作確認が重要
+
+#### **問題解決アプローチの学び**
+1. **ユーザー報告の重視**: 技術者の想定と実際の使用に乖離がある
+2. **エラーログの詳細確認**: 具体的なエラーメッセージからの問題特定
+3. **修正と検証の同時実行**: テストケース改善と機能修正を並行実施
+
+#### **品質保証での学び**
+1. **CI/CDの過信は危険**: 自動テストの成功 ≠ 品質保証
+2. **複合的問題の検出**: 単体では動くが組み合わせで失敗する問題
+3. **継続的改善**: 問題発生時のテスト手法自体の見直し
+
+---
+
+### 🔄 **予防策と今後の対応**
+
+#### **テスト手法の改善**
+- [x] 現実的テストケース設計手法の文書化
+- [x] 新機能追加時のテストケース判定基準作成
+- [ ] テストカバレッジの可視化
+- [ ] 定期的な実ブラウザテスト自動化
+
+#### **開発プロセスの改善**
+- [x] ユーザー報告に基づく問題分析強化
+- [x] 防御的プログラミングの標準化
+- [ ] コードレビュー時のテスト観点チェック
+- [ ] 段階的な品質確認プロセス導入
+
+---
+
+## 💡 **類似事例を防ぐためのチェックリスト**
+
+### **⚠️ 危険度: 極高**
+- [ ] 画面状態 + データ保存 + 複数画面遷移
+- [ ] CI/CDは成功するが実際の動作に問題がある
+- [ ] ユーザー報告と技術的確認に乖離がある
+
+### **⚠️ 危険度: 高**
+- [ ] 既存のテストでは表面的な動作のみ確認
+- [ ] セーブデータのバージョン間互換性問題
+- [ ] 複合的な状態遷移での動作未確認
+
+### **✅ 必須対応**
+- [ ] 現実的なユーザー操作フローでのテスト作成
+- [ ] エラー監視の包括的実装
+- [ ] 段階的な動作確認（修正→テスト→実確認）
+
+---
+
+*この事例は Epic Battle RPG v0.38-v0.41 の実際の改善プロセスから学んだものです。*
+*「CI/CDは通るが実際は動かない」問題への対策として、チーム内での共有と学習に活用してください。*
+
+---
+
 *この事例は Epic Battle RPG v0.32-v0.35 の実際の失敗から学んだものです。*
 *同様の問題を未然に防ぐため、チーム内での共有と学習に活用してください。*
