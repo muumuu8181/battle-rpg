@@ -26,11 +26,41 @@ class BattleRPG {
 
         this.enemy = null;
         this.enemyTemplates = [
-            { name: "スライム", sprite: "🟢", hp: 60, attack: 15, defense: 5, exp: 15, gold: 50 },
-            { name: "ゴブリン", sprite: "👺", hp: 80, attack: 22, defense: 8, exp: 20, gold: 75 },
-            { name: "オーク", sprite: "👹", hp: 120, attack: 28, defense: 12, exp: 30, gold: 100 },
-            { name: "ドラゴン", sprite: "🐉", hp: 200, attack: 45, defense: 20, exp: 50, gold: 200 },
-            { name: "デーモン", sprite: "😈", hp: 300, attack: 60, defense: 25, exp: 75, gold: 300 }
+            { 
+                name: "スライム", sprite: "🟢", hp: 60, attack: 15, defense: 5, exp: 15, gold: 50,
+                weaknesses: {
+                    attackTypes: ["slash"], // 斬撃に弱い
+                    elements: [] // 属性弱点なし
+                }
+            },
+            { 
+                name: "ゴブリン", sprite: "👺", hp: 80, attack: 22, defense: 8, exp: 20, gold: 75,
+                weaknesses: {
+                    attackTypes: ["blunt"], // 打撃に弱い
+                    elements: ["fire"] // 炎に弱い
+                }
+            },
+            { 
+                name: "オーク", sprite: "👹", hp: 120, attack: 28, defense: 12, exp: 30, gold: 100,
+                weaknesses: {
+                    attackTypes: ["pierce"], // 突きに弱い
+                    elements: ["lightning"] // 雷に弱い
+                }
+            },
+            { 
+                name: "ドラゴン", sprite: "🐉", hp: 200, attack: 45, defense: 20, exp: 50, gold: 200,
+                weaknesses: {
+                    attackTypes: ["blunt", "pierce"], // 打撃・突きに弱い
+                    elements: [] // 属性耐性あり
+                }
+            },
+            { 
+                name: "デーモン", sprite: "😈", hp: 300, attack: 60, defense: 25, exp: 75, gold: 300,
+                weaknesses: {
+                    attackTypes: ["slash"], // 斬撃に弱い
+                    elements: ["holy"] // 聖に弱い
+                }
+            }
         ];
 
         // 武器システム
@@ -41,7 +71,8 @@ class BattleRPG {
                 hitCount: 2,
                 types: ["slash", "pierce"], // 斬撃+突き
                 attackMultiplier: 1.0,
-                description: "バランスの取れた武器"
+                description: "バランスの取れた武器",
+                owned: true
             },
             club: { 
                 name: "棍棒", 
@@ -49,7 +80,8 @@ class BattleRPG {
                 hitCount: 3,
                 types: ["blunt"], // 打撃
                 attackMultiplier: 0.9,
-                description: "連続攻撃が得意"
+                description: "連続攻撃が得意",
+                owned: true
             },
             axe: { 
                 name: "斧", 
@@ -57,7 +89,48 @@ class BattleRPG {
                 hitCount: 1,
                 types: ["blunt", "slash"], // 打撃+斬撃
                 attackMultiplier: 1.4,
-                description: "一撃が重い"
+                description: "一撃が重い",
+                owned: true
+            },
+            steel_sword: {
+                name: "鋼の剣",
+                icon: "⚔️",
+                hitCount: 2,
+                types: ["slash", "pierce"],
+                attackMultiplier: 1.2,
+                description: "より鋭い斬れ味",
+                owned: false,
+                price: 200
+            },
+            iron_club: {
+                name: "鉄の棍棒",
+                icon: "🏏",
+                hitCount: 4,
+                types: ["blunt"],
+                attackMultiplier: 1.1,
+                description: "連撃の嵐",
+                owned: false,
+                price: 180
+            },
+            battle_axe: {
+                name: "戦斧",
+                icon: "🪓",
+                hitCount: 1,
+                types: ["blunt", "slash"],
+                attackMultiplier: 1.8,
+                description: "破壊的な一撃",
+                owned: false,
+                price: 300
+            },
+            holy_sword: {
+                name: "聖剣",
+                icon: "✨",
+                hitCount: 2,
+                types: ["slash", "holy"],
+                attackMultiplier: 1.4,
+                description: "邪悪を滅する光",
+                owned: false,
+                price: 500
             }
         };
 
@@ -65,7 +138,8 @@ class BattleRPG {
         this.attackTypes = {
             slash: { name: "斬撃", icon: "🗡️", color: "#e74c3c" },
             blunt: { name: "打撃", icon: "🔨", color: "#f39c12" },
-            pierce: { name: "突き", icon: "🗡️", color: "#9b59b6" }
+            pierce: { name: "突き", icon: "🗡️", color: "#9b59b6" },
+            holy: { name: "聖", icon: "✨", color: "#f1c40f" }
         };
 
         this.skills = {
@@ -125,16 +199,23 @@ class BattleRPG {
 
         // 街・ショップ・武器機能
         document.getElementById('shop-btn').addEventListener('click', () => this.showShop());
+        document.getElementById('weapon-shop-btn').addEventListener('click', () => this.showWeaponShop());
         document.getElementById('rest-btn').addEventListener('click', () => this.restAtInn());
         document.getElementById('battle-btn').addEventListener('click', () => this.startBattleFromTown());
         document.getElementById('weapon-btn').addEventListener('click', () => this.showWeaponSelect());
         document.getElementById('town-save-btn').addEventListener('click', () => this.saveGame());
         document.getElementById('shop-back').addEventListener('click', () => this.backToTown());
         document.getElementById('weapon-back').addEventListener('click', () => this.backToTown());
+        document.getElementById('weapon-shop-back').addEventListener('click', () => this.backToTown());
 
         // ショップアイテム購入
         document.querySelectorAll('.buy-btn').forEach(btn => {
             btn.addEventListener('click', (e) => this.buyItem(e.target.dataset.item, parseInt(e.target.dataset.price)));
+        });
+
+        // 武器購入
+        document.querySelectorAll('.buy-weapon-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => this.buyWeapon(e.target.dataset.weapon, parseInt(e.target.dataset.price)));
         });
 
         // 武器装備
@@ -158,7 +239,8 @@ class BattleRPG {
             attack: Math.floor(template.attack * levelMultiplier),
             defense: Math.floor(template.defense * levelMultiplier),
             exp: Math.floor(template.exp * levelMultiplier),
-            gold: Math.floor(template.gold * levelMultiplier)
+            gold: Math.floor(template.gold * levelMultiplier),
+            weaknesses: template.weaknesses // 弱点情報をコピー
         };
 
         document.getElementById('enemy-name').textContent = this.enemy.name;
@@ -180,7 +262,12 @@ class BattleRPG {
         }
         
         const weaponAttack = Math.floor(this.player.attack * weapon.attackMultiplier);
-        const damage = this.calculateDamage(weaponAttack, this.enemy.defense);
+        const baseDamage = this.calculateDamage(weaponAttack, this.enemy.defense);
+        
+        // 弱点システム適用
+        const weaknessMultiplier = this.calculateWeaknessMultiplier(weapon.types, null);
+        const damage = Math.floor(baseDamage * weaknessMultiplier);
+        
         const isCritical = Math.random() < 0.15 + (this.player.combo * 0.05); // コンボでクリティカル率上昇
         const finalDamage = isCritical ? Math.floor(damage * 2) : damage;
 
@@ -198,11 +285,12 @@ class BattleRPG {
         this.enemy.hp = Math.max(0, this.enemy.hp - finalDamage);
 
         const attackTypeText = weapon.types.map(type => this.attackTypes[type].name).join('・');
+        const weaknessText = this.getWeaknessText(weapon.types, null);
         
         if (isCritical) {
-            this.logMessage(`💥 クリティカルヒット！ ${weapon.icon}${weapon.name}(${attackTypeText})で${finalDamage}ダメージ！(コンボ: ${this.player.combo})`);
+            this.logMessage(`💥 クリティカルヒット！ ${weapon.icon}${weapon.name}(${attackTypeText})で${finalDamage}ダメージ！${weaknessText}(コンボ: ${this.player.combo})`);
         } else {
-            this.logMessage(`${weapon.icon} ${weapon.name}(${attackTypeText})で${finalDamage}ダメージ！(コンボ: ${this.player.combo})`);
+            this.logMessage(`${weapon.icon} ${weapon.name}(${attackTypeText})で${finalDamage}ダメージ！${weaknessText}(コンボ: ${this.player.combo})`);
         }
 
         this.updateUI();
@@ -235,8 +323,13 @@ class BattleRPG {
         } else {
             const baseDamage = Math.floor(this.player.attack * skill.power);
             const damage = this.calculateDamage(baseDamage, this.enemy.defense);
+            
+            // スキルの弱点システム適用（属性のみ）
+            const weaknessMultiplier = this.calculateWeaknessMultiplier(null, skill.element);
+            const weaknessDamage = Math.floor(damage * weaknessMultiplier);
+            
             const isCritical = Math.random() < 0.3; // スキルは高いクリティカル率
-            const finalDamage = isCritical ? Math.floor(damage * 1.5) : damage;
+            const finalDamage = isCritical ? Math.floor(weaknessDamage * 1.5) : weaknessDamage;
 
             this.player.combo += 2; // スキルはコンボが多く増加
             if (this.player.combo > this.player.maxCombo) {
@@ -250,7 +343,8 @@ class BattleRPG {
             this.enemy.hp = Math.max(0, this.enemy.hp - finalDamage);
 
             const critText = isCritical ? " クリティカル！" : "";
-            this.logMessage(`✨ ${skill.name}で${finalDamage}ダメージ！${critText}(コンボ: ${this.player.combo})`);
+            const weaknessText = this.getWeaknessText(null, skill.element);
+            this.logMessage(`✨ ${skill.name}で${finalDamage}ダメージ！${weaknessText}${critText}(コンボ: ${this.player.combo})`);
         }
 
         this.updateUI();
@@ -375,6 +469,53 @@ class BattleRPG {
         const baseDamage = attack - defense;
         const variance = Math.random() * 0.4 + 0.8; // 80-120%の変動
         return Math.max(1, Math.floor(baseDamage * variance));
+    }
+
+    // 弱点を考慮したダメージ計算
+    calculateWeaknessMultiplier(attackTypes, element) {
+        let multiplier = 1.0;
+        
+        if (!this.enemy || !this.enemy.weaknesses) return multiplier;
+        
+        // 攻撃タイプ弱点チェック
+        if (attackTypes) {
+            for (const attackType of attackTypes) {
+                if (this.enemy.weaknesses.attackTypes.includes(attackType)) {
+                    multiplier *= 1.5; // 弱点倍率
+                }
+            }
+        }
+        
+        // 属性弱点チェック
+        if (element && this.enemy.weaknesses.elements.includes(element)) {
+            multiplier *= 1.5; // 弱点倍率
+        }
+        
+        return multiplier;
+    }
+
+    // 弱点情報テキスト生成
+    getWeaknessText(attackTypes, element) {
+        const weaknesses = [];
+        
+        if (!this.enemy || !this.enemy.weaknesses) return '';
+        
+        if (attackTypes) {
+            for (const attackType of attackTypes) {
+                if (this.enemy.weaknesses.attackTypes.includes(attackType)) {
+                    weaknesses.push(`${this.attackTypes[attackType].name}弱点`);
+                }
+            }
+        }
+        
+        if (element && this.enemy.weaknesses.elements.includes(element)) {
+            const elementNames = {
+                fire: "炎", lightning: "雷", holy: "聖", ice: "氷"
+            };
+            weaknesses.push(`${elementNames[element] || element}弱点`);
+        }
+        
+        return weaknesses.length > 0 ? `🎯(${weaknesses.join('・')})` : '';
     }
 
     victory() {
@@ -578,14 +719,15 @@ class BattleRPG {
 
     logMessage(message) {
         const logContent = document.getElementById('log-content');
+        const battleLog = document.getElementById('battle-log'); // 親コンテナ
         const p = document.createElement('p');
         p.textContent = message;
         logContent.appendChild(p);
         
-        // 自動スクロール（重要！）
+        // 自動スクロール（確実版）
         setTimeout(() => {
-            logContent.scrollTop = logContent.scrollHeight;
-        }, 10);
+            battleLog.scrollTop = battleLog.scrollHeight;
+        }, 50);
 
         // ログの行数制限
         if (logContent.children.length > 15) { // 増やしてメッセージを多く表示
@@ -749,7 +891,7 @@ class BattleRPG {
                 items: this.items,
                 enemy: this.enemy,
                 saveTime: new Date().toISOString(),
-                version: "0.32"
+                version: "0.36"
             };
 
             localStorage.setItem('epicBattleRPG_save', JSON.stringify(saveData));
@@ -972,10 +1114,11 @@ class BattleRPG {
         this.logMessage('⚔️ 冒険に出発！新たな敵との遭遇...');
     }
 
-    // ショップから街に戻る（重要：画面を正しく切り替え）
+    // 各画面から街に戻る（重要：画面を正しく切り替え）
     backToTown() {
         this.hideShop();
         this.hideWeaponSelect();
+        this.hideWeaponShop();
         this.showTown();
     }
 
@@ -1010,7 +1153,16 @@ class BattleRPG {
         // 武器オプションの現在装備状態更新
         document.querySelectorAll('.weapon-option').forEach(option => {
             const weaponKey = option.dataset.weapon;
+            const weapon = this.weapons[weaponKey];
             const equipBtn = option.querySelector('.equip-btn');
+            
+            // 所有していない武器は非表示
+            if (!weapon || !weapon.owned) {
+                option.style.display = 'none';
+                return;
+            }
+            
+            option.style.display = 'flex';
             
             if (weaponKey === this.player.currentWeapon) {
                 option.classList.add('current');
@@ -1041,6 +1193,98 @@ class BattleRPG {
         
         this.updateWeaponUI();
         this.updateUI(); // プレイヤースプライト更新
+    }
+
+    // 武器屋システム
+    showWeaponShop() {
+        this.hideTown();
+        this.updateWeaponShopUI();
+        document.getElementById('weapon-shop-screen').classList.remove('hidden');
+        this.logMessage('🗡️ 武器屋にようこそ！強力な武器を取り揃えております！');
+    }
+
+    hideWeaponShop() {
+        document.getElementById('weapon-shop-screen').classList.add('hidden');
+    }
+
+    updateWeaponShopUI() {
+        // 現在の所持金
+        document.getElementById('weapon-shop-current-gold').textContent = this.gameState.score;
+        
+        // 購入ボタンの状態更新
+        document.querySelectorAll('.buy-weapon-btn').forEach(btn => {
+            const price = parseInt(btn.dataset.price);
+            const weaponKey = btn.dataset.weapon;
+            const weapon = this.weapons[weaponKey];
+            
+            // すでに所有している場合は「所有済み」表示
+            if (weapon && weapon.owned) {
+                btn.textContent = '所有済み';
+                btn.disabled = true;
+            } else if (this.gameState.score < price) {
+                btn.disabled = true;
+            } else {
+                btn.disabled = false;
+            }
+        });
+
+        // 所有武器リスト更新
+        this.updateWeaponInventoryList();
+    }
+
+    updateWeaponInventoryList() {
+        const inventoryList = document.getElementById('weapon-inventory-list');
+        inventoryList.innerHTML = '';
+        
+        const ownedWeapons = Object.entries(this.weapons).filter(([key, weapon]) => weapon.owned);
+        
+        if (ownedWeapons.length === 0) {
+            inventoryList.innerHTML = '<p>武器を所有していません</p>';
+            return;
+        }
+        
+        ownedWeapons.forEach(([key, weapon]) => {
+            const weaponDiv = document.createElement('div');
+            weaponDiv.style.cssText = 'display: flex; justify-content: space-between; align-items: center; padding: 0.5rem; margin-bottom: 0.5rem; background: rgba(255,255,255,0.1); border-radius: 5px;';
+            
+            const equipped = (key === this.player.currentWeapon) ? ' (装備中)' : '';
+            const attackTypes = weapon.types.map(type => this.attackTypes[type].name).join('・');
+            
+            weaponDiv.innerHTML = `
+                <span>${weapon.icon} ${weapon.name}${equipped}</span>
+                <span style="font-size: 0.8rem; opacity: 0.8;">${attackTypes} | ${weapon.hitCount}ヒット</span>
+            `;
+            inventoryList.appendChild(weaponDiv);
+        });
+    }
+
+    buyWeapon(weaponKey, price) {
+        const weapon = this.weapons[weaponKey];
+        
+        if (!weapon) {
+            this.showTemporaryMessage('武器が見つかりません', 'error');
+            return;
+        }
+        
+        if (weapon.owned) {
+            this.showTemporaryMessage('すでに所有しています', 'info');
+            return;
+        }
+        
+        if (this.gameState.score < price) {
+            this.showTemporaryMessage('お金が足りません！', 'error');
+            return;
+        }
+
+        // 購入処理
+        this.gameState.score -= price;
+        weapon.owned = true;
+        
+        this.logMessage(`🗡️ ${weapon.icon}${weapon.name}を購入しました！(-${price}G)`);
+        this.showTemporaryMessage(`${weapon.name}購入！`, 'success');
+        
+        this.updateWeaponShopUI();
+        this.updateUI();
     }
 }
 

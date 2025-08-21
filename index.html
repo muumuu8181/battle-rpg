@@ -153,6 +153,10 @@
                         🏪 ショップ
                         <span class="btn-description">アイテムを購入</span>
                     </button>
+                    <button id="weapon-shop-btn" class="town-menu-btn">
+                        🗡️ 武器屋
+                        <span class="btn-description">武器を購入</span>
+                    </button>
                     <button id="rest-btn" class="town-menu-btn">
                         🛏️ 宿屋 (20G)
                         <span class="btn-description">HP・MPを全回復</span>
@@ -162,7 +166,7 @@
                         <span class="btn-description">戦闘を開始</span>
                     </button>
                     <button id="weapon-btn" class="town-menu-btn weapon-menu">
-                        🗡️ 武器変更
+                        🔄 武器変更
                         <span class="btn-description">装備する武器を変更</span>
                     </button>
                     <button id="town-save-btn" class="town-menu-btn save-menu">
@@ -272,6 +276,64 @@
                 <div id="shop-controls">
                     <div id="shop-gold">💰 所持金: <span id="shop-current-gold">0</span>G</div>
                     <button id="shop-back" class="back-btn">街に戻る</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 武器屋画面 -->
+        <div id="weapon-shop-screen" class="screen hidden">
+            <div id="weapon-shop-content">
+                <h2>🗡️ 武器屋</h2>
+                <p>強力な武器で冒険を有利に進めよう！</p>
+                
+                <div id="weapon-shop-items">
+                    <div class="shop-item">
+                        <div class="item-info">
+                            <span class="item-name">⚔️ 鋼の剣</span>
+                            <span class="item-effect">斬撃・突き | 2ヒット | 攻撃力 1.2倍</span>
+                        </div>
+                        <div class="item-price">200G</div>
+                        <button class="buy-weapon-btn" data-weapon="steel_sword" data-price="200">購入</button>
+                    </div>
+                    
+                    <div class="shop-item">
+                        <div class="item-info">
+                            <span class="item-name">🏏 鉄の棍棒</span>
+                            <span class="item-effect">打撃 | 4ヒット | 攻撃力 1.1倍</span>
+                        </div>
+                        <div class="item-price">180G</div>
+                        <button class="buy-weapon-btn" data-weapon="iron_club" data-price="180">購入</button>
+                    </div>
+                    
+                    <div class="shop-item">
+                        <div class="item-info">
+                            <span class="item-name">🪓 戦斧</span>
+                            <span class="item-effect">打撃・斬撃 | 1ヒット | 攻撃力 1.8倍</span>
+                        </div>
+                        <div class="item-price">300G</div>
+                        <button class="buy-weapon-btn" data-weapon="battle_axe" data-price="300">購入</button>
+                    </div>
+                    
+                    <div class="shop-item">
+                        <div class="item-info">
+                            <span class="item-name">✨ 聖剣</span>
+                            <span class="item-effect">斬撃・聖 | 2ヒット | 攻撃力 1.4倍</span>
+                        </div>
+                        <div class="item-price">500G</div>
+                        <button class="buy-weapon-btn" data-weapon="holy_sword" data-price="500">購入</button>
+                    </div>
+                </div>
+                
+                <div id="weapon-shop-inventory">
+                    <h3>所有武器</h3>
+                    <div id="weapon-inventory-list">
+                        <!-- 動的に生成 -->
+                    </div>
+                </div>
+                
+                <div id="weapon-shop-controls">
+                    <div id="weapon-shop-gold">💰 所持金: <span id="weapon-shop-current-gold">0</span>G</div>
+                    <button id="weapon-shop-back" class="back-btn">街に戻る</button>
                 </div>
             </div>
         </div>

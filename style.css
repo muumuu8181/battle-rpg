@@ -460,23 +460,27 @@ body {
 
 /* 街メニュー */
 #town-menu {
-    display: flex;
-    flex-direction: column;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     gap: 1rem;
     margin: 2rem 0;
 }
 
 .town-menu-btn {
-    padding: 1.5rem;
+    padding: 1rem;
     border: none;
-    border-radius: 15px;
+    border-radius: 10px;
     background: linear-gradient(135deg, #27ae60 0%, #229954 100%);
     color: white;
     font-weight: bold;
     cursor: pointer;
     transition: all 0.3s ease;
-    text-align: left;
+    text-align: center;
     position: relative;
+    min-height: 80px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
 }
 
 .town-menu-btn:hover {
@@ -494,9 +498,10 @@ body {
 
 .btn-description {
     display: block;
-    font-size: 0.9rem;
+    font-size: 0.8rem;
     opacity: 0.8;
-    margin-top: 0.5rem;
+    margin-top: 0.3rem;
+    font-weight: normal;
 }
 
 #town-stats {
