@@ -5,7 +5,7 @@ class BattleRPG {
             score: 0,
             level: 1,
             exp: 0,
-            expToNext: 100,
+            expToNext: 50, // レベルアップしやすくした
             battleCount: 0
         };
 
@@ -25,11 +25,11 @@ class BattleRPG {
 
         this.enemy = null;
         this.enemyTemplates = [
-            { name: "スライム", sprite: "🟢", hp: 60, attack: 15, defense: 5, exp: 25, gold: 50 },
-            { name: "ゴブリン", sprite: "👺", hp: 80, attack: 22, defense: 8, exp: 35, gold: 75 },
-            { name: "オーク", sprite: "👹", hp: 120, attack: 28, defense: 12, exp: 50, gold: 100 },
-            { name: "ドラゴン", sprite: "🐉", hp: 200, attack: 45, defense: 20, exp: 100, gold: 200 },
-            { name: "デーモン", sprite: "😈", hp: 300, attack: 60, defense: 25, exp: 150, gold: 300 }
+            { name: "スライム", sprite: "🟢", hp: 60, attack: 15, defense: 5, exp: 15, gold: 50 },
+            { name: "ゴブリン", sprite: "👺", hp: 80, attack: 22, defense: 8, exp: 20, gold: 75 },
+            { name: "オーク", sprite: "👹", hp: 120, attack: 28, defense: 12, exp: 30, gold: 100 },
+            { name: "ドラゴン", sprite: "🐉", hp: 200, attack: 45, defense: 20, exp: 50, gold: 200 },
+            { name: "デーモン", sprite: "😈", hp: 300, attack: 60, defense: 25, exp: 75, gold: 300 }
         ];
 
         this.skills = {
@@ -81,7 +81,23 @@ class BattleRPG {
 
         // 結果画面
         document.getElementById('next-battle-btn').addEventListener('click', () => this.nextBattle());
-        document.getElementById('restart-btn').addEventListener('click', () => this.restart());
+        document.getElementById('town-btn').addEventListener('click', () => this.showTown());
+
+        // セーブ・ロード機能
+        document.getElementById('save-btn').addEventListener('click', () => this.saveGame());
+        document.getElementById('load-btn').addEventListener('click', () => this.loadGame());
+
+        // 街・ショップ機能
+        document.getElementById('shop-btn').addEventListener('click', () => this.showShop());
+        document.getElementById('rest-btn').addEventListener('click', () => this.restAtInn());
+        document.getElementById('battle-btn').addEventListener('click', () => this.startBattleFromTown());
+        document.getElementById('town-save-btn').addEventListener('click', () => this.saveGame());
+        document.getElementById('shop-back').addEventListener('click', () => this.backToTown());
+
+        // ショップアイテム購入
+        document.querySelectorAll('.buy-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => this.buyItem(e.target.dataset.item, parseInt(e.target.dataset.price)));
+        });
     }
 
     spawnNewEnemy() {
@@ -120,7 +136,9 @@ class BattleRPG {
         }
 
         this.animateCharacter('player', 'attacking');
-        this.showDamageNumber(finalDamage, 'enemy', isCritical);
+        
+        // 連続ヒット表示
+        this.showMultiHitDamage(finalDamage, 'enemy', isCritical);
         this.showEffect('⚔️', 'enemy');
 
         this.enemy.hp = Math.max(0, this.enemy.hp - finalDamage);
@@ -314,7 +332,7 @@ class BattleRPG {
         while (this.gameState.exp >= this.gameState.expToNext) {
             this.gameState.exp -= this.gameState.expToNext;
             this.gameState.level++;
-            this.gameState.expToNext = Math.floor(this.gameState.expToNext * 1.2);
+            this.gameState.expToNext = Math.floor(this.gameState.expToNext * 1.1); // 成長率も緩やかに
             this.levelUp();
             leveledUp = true;
         }
@@ -372,7 +390,7 @@ class BattleRPG {
     }
 
     restart() {
-        this.gameState = { score: 0, level: 1, exp: 0, expToNext: 100, battleCount: 0 };
+        this.gameState = { score: 0, level: 1, exp: 0, expToNext: 50, battleCount: 0 };
         this.player = {
             name: "勇者", maxHp: 100, hp: 100, maxMp: 50, mp: 50,
             attack: 20, defense: 10, level: 1, isGuarding: false, combo: 0, maxCombo: 0
@@ -507,10 +525,14 @@ class BattleRPG {
         const p = document.createElement('p');
         p.textContent = message;
         logContent.appendChild(p);
-        logContent.scrollTop = logContent.scrollHeight;
+        
+        // 自動スクロール（重要！）
+        setTimeout(() => {
+            logContent.scrollTop = logContent.scrollHeight;
+        }, 10);
 
         // ログの行数制限
-        if (logContent.children.length > 10) {
+        if (logContent.children.length > 15) { // 増やしてメッセージを多く表示
             logContent.removeChild(logContent.firstChild);
         }
     }
@@ -547,6 +569,94 @@ class BattleRPG {
         }, 1800);
     }
 
+    // 連続ヒット表示システム
+    showMultiHitDamage(totalDamage, target, isCritical = false) {
+        const hitCount = Math.min(Math.max(2, Math.floor(totalDamage / 8)), 6); // 2-6ヒット
+        const damages = this.splitDamage(totalDamage, hitCount);
+        
+        const targetElement = document.getElementById(`${target}-character`);
+        const rect = targetElement.getBoundingClientRect();
+        
+        damages.forEach((damage, index) => {
+            setTimeout(() => {
+                this.createMultiHitNumber(damage, rect, index, hitCount, isCritical);
+            }, index * 150); // 150ms間隔で連続表示
+        });
+        
+        // 合計ダメージ表示
+        setTimeout(() => {
+            this.createTotalDamageNumber(totalDamage, rect, isCritical);
+        }, hitCount * 150 + 300);
+    }
+
+    // ダメージを複数ヒットに分割
+    splitDamage(totalDamage, hitCount) {
+        const baseDamage = Math.floor(totalDamage / hitCount);
+        const remainder = totalDamage % hitCount;
+        const damages = [];
+        
+        for (let i = 0; i < hitCount; i++) {
+            let damage = baseDamage;
+            if (i < remainder) damage++; // 余りを前のヒットに配分
+            
+            // 少し変動を加える
+            const variation = Math.floor(Math.random() * 3) - 1; // -1, 0, +1
+            damage = Math.max(1, damage + variation);
+            damages.push(damage);
+        }
+        
+        return damages;
+    }
+
+    // 個別ヒット数値表示
+    createMultiHitNumber(damage, targetRect, index, totalHits, isCritical) {
+        const damageArea = document.getElementById('damage-area');
+        const hitDiv = document.createElement('div');
+        
+        hitDiv.className = `multi-hit-number ${isCritical ? 'critical' : ''}`;
+        hitDiv.textContent = `-${damage}`;
+        
+        // 位置をずらして表示
+        const offsetX = (index - totalHits / 2) * 40 + (Math.random() - 0.5) * 20;
+        const offsetY = Math.random() * 30 - 15;
+        
+        hitDiv.style.left = `${targetRect.left + targetRect.width / 2 + offsetX}px`;
+        hitDiv.style.top = `${targetRect.top + offsetY}px`;
+        hitDiv.style.fontSize = '1.5rem';
+        hitDiv.style.animation = 'multiHitFloat 1.2s ease-out forwards';
+        
+        damageArea.appendChild(hitDiv);
+        
+        setTimeout(() => {
+            if (damageArea.contains(hitDiv)) {
+                damageArea.removeChild(hitDiv);
+            }
+        }, 1200);
+    }
+
+    // 合計ダメージ表示
+    createTotalDamageNumber(totalDamage, targetRect, isCritical) {
+        const damageArea = document.getElementById('damage-area');
+        const totalDiv = document.createElement('div');
+        
+        totalDiv.className = `total-damage-number ${isCritical ? 'critical' : ''}`;
+        totalDiv.textContent = `TOTAL: ${totalDamage}`;
+        
+        totalDiv.style.left = `${targetRect.left + targetRect.width / 2}px`;
+        totalDiv.style.top = `${targetRect.top - 20}px`;
+        totalDiv.style.fontSize = '2rem';
+        totalDiv.style.fontWeight = 'bold';
+        totalDiv.style.animation = 'totalDamageShow 2s ease-out forwards';
+        
+        damageArea.appendChild(totalDiv);
+        
+        setTimeout(() => {
+            if (damageArea.contains(totalDiv)) {
+                damageArea.removeChild(totalDiv);
+            }
+        }, 2000);
+    }
+
     showEffect(effectChar, target) {
         const effectArea = document.getElementById('effect-area');
         const effectDiv = document.createElement('div');
@@ -565,6 +675,215 @@ class BattleRPG {
         setTimeout(() => {
             effectArea.removeChild(effectDiv);
         }, 1000);
+    }
+
+    // セーブ機能
+    saveGame() {
+        try {
+            const saveData = {
+                gameState: this.gameState,
+                player: this.player,
+                items: this.items,
+                enemy: this.enemy,
+                saveTime: new Date().toISOString(),
+                version: "0.2"
+            };
+
+            localStorage.setItem('epicBattleRPG_save', JSON.stringify(saveData));
+            
+            this.logMessage('💾 ゲームをセーブしました！');
+            this.showTemporaryMessage('セーブ完了！', 'success');
+        } catch (error) {
+            this.logMessage('❌ セーブに失敗しました。');
+            this.showTemporaryMessage('セーブ失敗...', 'error');
+        }
+    }
+
+    // ロード機能
+    loadGame() {
+        try {
+            const savedData = localStorage.getItem('epicBattleRPG_save');
+            if (!savedData) {
+                this.logMessage('❌ セーブデータが見つかりません。');
+                this.showTemporaryMessage('セーブデータなし', 'error');
+                return;
+            }
+
+            const saveData = JSON.parse(savedData);
+            
+            // データ復元
+            this.gameState = saveData.gameState;
+            this.player = saveData.player;
+            this.items = saveData.items;
+            this.enemy = saveData.enemy;
+
+            // 敵が存在する場合の処理
+            if (this.enemy) {
+                document.getElementById('enemy-name').textContent = this.enemy.name;
+                document.querySelector('#enemy-character .character-sprite').textContent = this.enemy.sprite;
+                this.isBattleActive = true;
+            } else {
+                this.spawnNewEnemy();
+            }
+
+            this.updateUI();
+            this.clearLog();
+            
+            const saveTime = new Date(saveData.saveTime).toLocaleString();
+            this.logMessage(`📂 ゲームをロードしました！(${saveTime})`);
+            this.showTemporaryMessage('ロード完了！', 'success');
+            
+        } catch (error) {
+            this.logMessage('❌ ロードに失敗しました。');
+            this.showTemporaryMessage('ロード失敗...', 'error');
+        }
+    }
+
+    // 一時的なメッセージ表示
+    showTemporaryMessage(message, type = 'info') {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `temp-message ${type}`;
+        messageDiv.textContent = message;
+        messageDiv.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 1rem 2rem;
+            border-radius: 10px;
+            color: white;
+            font-weight: bold;
+            z-index: 10000;
+            animation: fadeInOut 3s ease-in-out forwards;
+            ${type === 'success' ? 'background: linear-gradient(135deg, #27ae60, #229954);' : 
+              type === 'error' ? 'background: linear-gradient(135deg, #e74c3c, #c0392b);' : 
+              'background: linear-gradient(135deg, #3498db, #2980b9);'}
+        `;
+
+        document.body.appendChild(messageDiv);
+
+        setTimeout(() => {
+            document.body.removeChild(messageDiv);
+        }, 3000);
+
+        // CSS アニメーションを動的に追加
+        if (!document.getElementById('temp-message-styles')) {
+            const style = document.createElement('style');
+            style.id = 'temp-message-styles';
+            style.textContent = `
+                @keyframes fadeInOut {
+                    0% { opacity: 0; transform: translateX(100px); }
+                    20%, 80% { opacity: 1; transform: translateX(0); }
+                    100% { opacity: 0; transform: translateX(100px); }
+                }
+            `;
+            document.head.appendChild(style);
+        }
+    }
+
+    // 街機能
+    showTown() {
+        this.hideResultScreen();
+        this.updateTownUI();
+        document.getElementById('town-screen').classList.remove('hidden');
+        this.logMessage('🏘️ 冒険者の街に到着しました。');
+    }
+
+    hideTown() {
+        document.getElementById('town-screen').classList.add('hidden');
+    }
+
+    updateTownUI() {
+        document.getElementById('town-gold').textContent = this.gameState.score;
+        document.getElementById('town-level').textContent = this.gameState.level;
+        document.getElementById('town-exp').textContent = this.gameState.exp;
+        document.getElementById('town-exp-next').textContent = this.gameState.expToNext;
+    }
+
+    // ショップ機能
+    showShop() {
+        this.hideTown();
+        this.updateShopUI();
+        document.getElementById('shop-screen').classList.remove('hidden');
+        this.logMessage('🏪 アイテムショップへようこそ！');
+    }
+
+    hideShop() {
+        document.getElementById('shop-screen').classList.add('hidden');
+    }
+
+    updateShopUI() {
+        // 現在の所持金
+        document.getElementById('shop-current-gold').textContent = this.gameState.score;
+        
+        // インベントリ表示
+        document.getElementById('inv-potion').textContent = this.items.potion.count;
+        document.getElementById('inv-mana').textContent = this.items.mana.count;
+        document.getElementById('inv-bomb').textContent = this.items.bomb.count;
+
+        // 購入ボタンの状態更新
+        document.querySelectorAll('.buy-btn').forEach(btn => {
+            const price = parseInt(btn.dataset.price);
+            btn.disabled = this.gameState.score < price;
+        });
+    }
+
+    buyItem(itemName, price) {
+        if (this.gameState.score < price) {
+            this.showTemporaryMessage('お金が足りません！', 'error');
+            return;
+        }
+
+        this.gameState.score -= price;
+        this.items[itemName].count++;
+
+        const itemNames = {
+            potion: 'ポーション',
+            mana: 'マナポーション',
+            bomb: '爆弾'
+        };
+
+        this.logMessage(`🛒 ${itemNames[itemName]}を購入しました！(-${price}G)`);
+        this.showTemporaryMessage(`${itemNames[itemName]}購入！`, 'success');
+        this.updateShopUI();
+        this.updateUI();
+    }
+
+    // 宿屋での休息
+    restAtInn() {
+        const cost = 20;
+        if (this.gameState.score < cost) {
+            this.showTemporaryMessage('宿代が足りません！', 'error');
+            this.logMessage(`❌ 宿代${cost}Gが必要です。`);
+            return;
+        }
+
+        if (this.player.hp === this.player.maxHp && this.player.mp === this.player.maxMp) {
+            this.showTemporaryMessage('すでに完全回復しています', 'info');
+            return;
+        }
+
+        this.gameState.score -= cost;
+        this.player.hp = this.player.maxHp;
+        this.player.mp = this.player.maxMp;
+        
+        this.logMessage(`🛏️ 宿屋で休息しました。HP・MP完全回復！(-${cost}G)`);
+        this.showTemporaryMessage('完全回復！', 'success');
+        this.updateTownUI();
+        this.updateUI();
+    }
+
+    // 街から戦闘開始
+    startBattleFromTown() {
+        this.hideTown();
+        this.spawnNewEnemy();
+        this.updateUI();
+        this.logMessage('⚔️ 冒険に出発！新たな敵との遭遇...');
+    }
+
+    // ショップから街に戻る（重要：画面を正しく切り替え）
+    backToTown() {
+        this.hideShop();
+        this.showTown();
     }
 }
 

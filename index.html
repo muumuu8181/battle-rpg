@@ -16,6 +16,10 @@
                 <span id="level">Level: 1</span>
                 <span id="exp">EXP: 0/100</span>
             </div>
+            <div id="save-controls">
+                <button id="save-btn" class="save-btn">💾 セーブ</button>
+                <button id="load-btn" class="save-btn">📂 ロード</button>
+            </div>
         </header>
 
         <!-- メインゲーム画面 -->
@@ -134,7 +138,90 @@
                     <p>獲得ゴールド: <span id="gained-gold">100</span></p>
                 </div>
                 <button id="next-battle-btn" class="result-btn">次の戦闘</button>
-                <button id="restart-btn" class="result-btn">最初から</button>
+                <button id="town-btn" class="result-btn">街に戻る</button>
+            </div>
+        </div>
+
+        <!-- 街画面 -->
+        <div id="town-screen" class="screen hidden">
+            <div id="town-content">
+                <h2>🏘️ 冒険者の街</h2>
+                <p>ここで休息を取り、装備を整えて次の戦いに備えよう。</p>
+                
+                <div id="town-menu">
+                    <button id="shop-btn" class="town-menu-btn">
+                        🏪 ショップ
+                        <span class="btn-description">アイテムを購入</span>
+                    </button>
+                    <button id="rest-btn" class="town-menu-btn">
+                        🛏️ 宿屋 (20G)
+                        <span class="btn-description">HP・MPを全回復</span>
+                    </button>
+                    <button id="battle-btn" class="town-menu-btn">
+                        ⚔️ 冒険に出る
+                        <span class="btn-description">戦闘を開始</span>
+                    </button>
+                    <button id="town-save-btn" class="town-menu-btn save-menu">
+                        💾 セーブ
+                        <span class="btn-description">ゲーム進行状況を保存</span>
+                    </button>
+                </div>
+                
+                <div id="town-stats">
+                    <p>💰 所持金: <span id="town-gold">0</span>G</p>
+                    <p>📊 レベル: <span id="town-level">1</span> (EXP: <span id="town-exp">0</span>/<span id="town-exp-next">50</span>)</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ショップ画面 -->
+        <div id="shop-screen" class="screen hidden">
+            <div id="shop-content">
+                <h2>🏪 アイテムショップ</h2>
+                <p>冒険に必要なアイテムを取り揃えております！</p>
+                
+                <div id="shop-items">
+                    <div class="shop-item">
+                        <div class="item-info">
+                            <span class="item-name">🧪 ポーション</span>
+                            <span class="item-effect">HP +30</span>
+                        </div>
+                        <div class="item-price">50G</div>
+                        <button class="buy-btn" data-item="potion" data-price="50">購入</button>
+                    </div>
+                    
+                    <div class="shop-item">
+                        <div class="item-info">
+                            <span class="item-name">💙 マナポーション</span>
+                            <span class="item-effect">MP +20</span>
+                        </div>
+                        <div class="item-price">75G</div>
+                        <button class="buy-btn" data-item="mana" data-price="75">購入</button>
+                    </div>
+                    
+                    <div class="shop-item">
+                        <div class="item-info">
+                            <span class="item-name">💣 爆弾</span>
+                            <span class="item-effect">大ダメージ</span>
+                        </div>
+                        <div class="item-price">100G</div>
+                        <button class="buy-btn" data-item="bomb" data-price="100">購入</button>
+                    </div>
+                </div>
+                
+                <div id="shop-inventory">
+                    <h3>現在の所持品</h3>
+                    <div id="inventory-list">
+                        <span>🧪 ポーション: <span id="inv-potion">0</span>個</span>
+                        <span>💙 マナポーション: <span id="inv-mana">0</span>個</span>
+                        <span>💣 爆弾: <span id="inv-bomb">0</span>個</span>
+                    </div>
+                </div>
+                
+                <div id="shop-controls">
+                    <div id="shop-gold">💰 所持金: <span id="shop-current-gold">0</span>G</div>
+                    <button id="shop-back" class="back-btn">街に戻る</button>
+                </div>
             </div>
         </div>
     </div>
