@@ -20,7 +20,8 @@ class BattleRPG {
             level: 1,
             isGuarding: false,
             combo: 0,
-            maxCombo: 0
+            maxCombo: 0,
+            currentWeapon: 'sword' // 初期武器は剣
         };
 
         this.enemy = null;
@@ -32,11 +33,46 @@ class BattleRPG {
             { name: "デーモン", sprite: "😈", hp: 300, attack: 60, defense: 25, exp: 75, gold: 300 }
         ];
 
+        // 武器システム
+        this.weapons = {
+            sword: { 
+                name: "剣", 
+                icon: "⚔️", 
+                hitCount: 2,
+                types: ["slash", "pierce"], // 斬撃+突き
+                attackMultiplier: 1.0,
+                description: "バランスの取れた武器"
+            },
+            club: { 
+                name: "棍棒", 
+                icon: "🏏", 
+                hitCount: 3,
+                types: ["blunt"], // 打撃
+                attackMultiplier: 0.9,
+                description: "連続攻撃が得意"
+            },
+            axe: { 
+                name: "斧", 
+                icon: "🪓", 
+                hitCount: 1,
+                types: ["blunt", "slash"], // 打撃+斬撃
+                attackMultiplier: 1.4,
+                description: "一撃が重い"
+            }
+        };
+
+        // 攻撃タイプ情報
+        this.attackTypes = {
+            slash: { name: "斬撃", icon: "🗡️", color: "#e74c3c" },
+            blunt: { name: "打撃", icon: "🔨", color: "#f39c12" },
+            pierce: { name: "突き", icon: "🗡️", color: "#9b59b6" }
+        };
+
         this.skills = {
-            fire: { name: "ファイア", cost: 10, power: 1.8, effect: "🔥", description: "炎の魔法で敵を焼く" },
-            heal: { name: "ヒール", cost: 15, power: 0.8, effect: "💚", description: "HPを回復する" },
-            thunder: { name: "サンダー", cost: 20, power: 2.2, effect: "⚡", description: "雷撃で大ダメージ" },
-            critical: { name: "クリティカル", cost: 25, power: 3.0, effect: "💥", description: "必殺の一撃" }
+            fire: { name: "ファイア", cost: 10, power: 1.8, effect: "🔥", description: "炎の魔法で敵を焼く", element: "fire" },
+            heal: { name: "ヒール", cost: 15, power: 0.8, effect: "💚", description: "HPを回復する", element: "holy" },
+            thunder: { name: "サンダー", cost: 20, power: 2.2, effect: "⚡", description: "雷撃で大ダメージ", element: "lightning" },
+            critical: { name: "クリティカル", cost: 25, power: 3.0, effect: "💥", description: "必殺の一撃", element: "physical" }
         };
 
         this.items = {
@@ -87,16 +123,26 @@ class BattleRPG {
         document.getElementById('save-btn').addEventListener('click', () => this.saveGame());
         document.getElementById('load-btn').addEventListener('click', () => this.loadGame());
 
-        // 街・ショップ機能
+        // 街・ショップ・武器機能
         document.getElementById('shop-btn').addEventListener('click', () => this.showShop());
         document.getElementById('rest-btn').addEventListener('click', () => this.restAtInn());
         document.getElementById('battle-btn').addEventListener('click', () => this.startBattleFromTown());
+        document.getElementById('weapon-btn').addEventListener('click', () => this.showWeaponSelect());
         document.getElementById('town-save-btn').addEventListener('click', () => this.saveGame());
         document.getElementById('shop-back').addEventListener('click', () => this.backToTown());
+        document.getElementById('weapon-back').addEventListener('click', () => this.backToTown());
 
         // ショップアイテム購入
         document.querySelectorAll('.buy-btn').forEach(btn => {
             btn.addEventListener('click', (e) => this.buyItem(e.target.dataset.item, parseInt(e.target.dataset.price)));
+        });
+
+        // 武器装備
+        document.querySelectorAll('.equip-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const weaponOption = e.target.closest('.weapon-option');
+                this.equipWeapon(weaponOption.dataset.weapon);
+            });
         });
     }
 
@@ -126,7 +172,9 @@ class BattleRPG {
     playerAttack() {
         if (!this.canPlayerAct()) return;
 
-        const damage = this.calculateDamage(this.player.attack, this.enemy.defense);
+        const weapon = this.weapons[this.player.currentWeapon];
+        const weaponAttack = Math.floor(this.player.attack * weapon.attackMultiplier);
+        const damage = this.calculateDamage(weaponAttack, this.enemy.defense);
         const isCritical = Math.random() < 0.15 + (this.player.combo * 0.05); // コンボでクリティカル率上昇
         const finalDamage = isCritical ? Math.floor(damage * 2) : damage;
 
@@ -143,10 +191,13 @@ class BattleRPG {
 
         this.enemy.hp = Math.max(0, this.enemy.hp - finalDamage);
 
+        const weapon = this.weapons[this.player.currentWeapon];
+        const attackTypeText = weapon.types.map(type => this.attackTypes[type].name).join('・');
+        
         if (isCritical) {
-            this.logMessage(`💥 クリティカルヒット！ ${this.player.name}の攻撃で${finalDamage}ダメージ！(コンボ: ${this.player.combo})`);
+            this.logMessage(`💥 クリティカルヒット！ ${weapon.icon}${weapon.name}(${attackTypeText})で${finalDamage}ダメージ！(コンボ: ${this.player.combo})`);
         } else {
-            this.logMessage(`⚔️ ${this.player.name}の攻撃で${finalDamage}ダメージ！(コンボ: ${this.player.combo})`);
+            this.logMessage(`${weapon.icon} ${weapon.name}(${attackTypeText})で${finalDamage}ダメージ！(コンボ: ${this.player.combo})`);
         }
 
         this.updateUI();
@@ -393,7 +444,7 @@ class BattleRPG {
         this.gameState = { score: 0, level: 1, exp: 0, expToNext: 50, battleCount: 0 };
         this.player = {
             name: "勇者", maxHp: 100, hp: 100, maxMp: 50, mp: 50,
-            attack: 20, defense: 10, level: 1, isGuarding: false, combo: 0, maxCombo: 0
+            attack: 20, defense: 10, level: 1, isGuarding: false, combo: 0, maxCombo: 0, currentWeapon: 'sword'
         };
         
         // アイテムリセット
@@ -569,9 +620,10 @@ class BattleRPG {
         }, 1800);
     }
 
-    // 連続ヒット表示システム
+    // 連続ヒット表示システム（武器別）
     showMultiHitDamage(totalDamage, target, isCritical = false) {
-        const hitCount = Math.min(Math.max(2, Math.floor(totalDamage / 8)), 6); // 2-6ヒット
+        const currentWeapon = this.weapons[this.player.currentWeapon];
+        const hitCount = currentWeapon.hitCount;
         const damages = this.splitDamage(totalDamage, hitCount);
         
         const targetElement = document.getElementById(`${target}-character`);
@@ -579,14 +631,14 @@ class BattleRPG {
         
         damages.forEach((damage, index) => {
             setTimeout(() => {
-                this.createMultiHitNumber(damage, rect, index, hitCount, isCritical);
-            }, index * 150); // 150ms間隔で連続表示
+                this.createMultiHitNumber(damage, rect, index, hitCount, isCritical, currentWeapon);
+            }, index * 120); // 武器に応じて間隔調整
         });
         
         // 合計ダメージ表示
         setTimeout(() => {
-            this.createTotalDamageNumber(totalDamage, rect, isCritical);
-        }, hitCount * 150 + 300);
+            this.createTotalDamageNumber(totalDamage, rect, isCritical, currentWeapon);
+        }, hitCount * 120 + 300);
     }
 
     // ダメージを複数ヒットに分割
@@ -608,13 +660,18 @@ class BattleRPG {
         return damages;
     }
 
-    // 個別ヒット数値表示
-    createMultiHitNumber(damage, targetRect, index, totalHits, isCritical) {
+    // 個別ヒット数値表示（武器情報付き）
+    createMultiHitNumber(damage, targetRect, index, totalHits, isCritical, weapon) {
         const damageArea = document.getElementById('damage-area');
         const hitDiv = document.createElement('div');
         
-        hitDiv.className = `multi-hit-number ${isCritical ? 'critical' : ''}`;
+        // 攻撃タイプに応じた色設定
+        const attackType = weapon.types[index % weapon.types.length];
+        const typeInfo = this.attackTypes[attackType];
+        
+        hitDiv.className = `multi-hit-number ${isCritical ? 'critical' : ''} ${attackType}`;
         hitDiv.textContent = `-${damage}`;
+        hitDiv.style.color = typeInfo.color;
         
         // 位置をずらして表示
         const offsetX = (index - totalHits / 2) * 40 + (Math.random() - 0.5) * 20;
@@ -622,7 +679,7 @@ class BattleRPG {
         
         hitDiv.style.left = `${targetRect.left + targetRect.width / 2 + offsetX}px`;
         hitDiv.style.top = `${targetRect.top + offsetY}px`;
-        hitDiv.style.fontSize = '1.5rem';
+        hitDiv.style.fontSize = weapon.hitCount === 1 ? '2rem' : '1.5rem'; // 斧は大きく表示
         hitDiv.style.animation = 'multiHitFloat 1.2s ease-out forwards';
         
         damageArea.appendChild(hitDiv);
@@ -634,13 +691,14 @@ class BattleRPG {
         }, 1200);
     }
 
-    // 合計ダメージ表示
-    createTotalDamageNumber(totalDamage, targetRect, isCritical) {
+    // 合計ダメージ表示（武器情報付き）
+    createTotalDamageNumber(totalDamage, targetRect, isCritical, weapon) {
         const damageArea = document.getElementById('damage-area');
         const totalDiv = document.createElement('div');
         
+        // 武器アイコン付き
         totalDiv.className = `total-damage-number ${isCritical ? 'critical' : ''}`;
-        totalDiv.textContent = `TOTAL: ${totalDamage}`;
+        totalDiv.textContent = `${weapon.icon} ${totalDamage}`;
         
         totalDiv.style.left = `${targetRect.left + targetRect.width / 2}px`;
         totalDiv.style.top = `${targetRect.top - 20}px`;
@@ -686,7 +744,7 @@ class BattleRPG {
                 items: this.items,
                 enemy: this.enemy,
                 saveTime: new Date().toISOString(),
-                version: "0.2"
+                version: "0.32"
             };
 
             localStorage.setItem('epicBattleRPG_save', JSON.stringify(saveData));
@@ -797,6 +855,20 @@ class BattleRPG {
         document.getElementById('town-level').textContent = this.gameState.level;
         document.getElementById('town-exp').textContent = this.gameState.exp;
         document.getElementById('town-exp-next').textContent = this.gameState.expToNext;
+        
+        // 現在の武器表示を更新
+        const currentWeapon = this.weapons[this.player.currentWeapon];
+        const townStatsEl = document.getElementById('town-stats');
+        const weaponInfoEl = townStatsEl.querySelector('.weapon-info');
+        
+        if (weaponInfoEl) {
+            weaponInfoEl.remove();
+        }
+        
+        const weaponInfo = document.createElement('p');
+        weaponInfo.className = 'weapon-info';
+        weaponInfo.innerHTML = `🗡️ 現在の武器: ${currentWeapon.icon} ${currentWeapon.name}`;
+        townStatsEl.appendChild(weaponInfo);
     }
 
     // ショップ機能
@@ -851,17 +923,27 @@ class BattleRPG {
     // 宿屋での休息
     restAtInn() {
         const cost = 20;
+        
+        // 現在のステータス表示
+        const hpStatus = `HP: ${this.player.hp}/${this.player.maxHp}`;
+        const mpStatus = `MP: ${this.player.mp}/${this.player.maxMp}`;
+        const currentStatus = `${hpStatus}, ${mpStatus}`;
+        
         if (this.gameState.score < cost) {
             this.showTemporaryMessage('宿代が足りません！', 'error');
-            this.logMessage(`❌ 宿代${cost}Gが必要です。`);
+            this.logMessage(`❌ 宿代${cost}Gが必要です。(現在: ${currentStatus})`);
             return;
         }
 
         if (this.player.hp === this.player.maxHp && this.player.mp === this.player.maxMp) {
             this.showTemporaryMessage('すでに完全回復しています', 'info');
+            this.logMessage(`ℹ️ すでに完全回復状態です。(${currentStatus})`);
             return;
         }
 
+        // 回復前の状態をログに記録
+        this.logMessage(`🛏️ 宿屋利用前: ${currentStatus}`);
+        
         this.gameState.score -= cost;
         this.player.hp = this.player.maxHp;
         this.player.mp = this.player.maxMp;
@@ -883,7 +965,72 @@ class BattleRPG {
     // ショップから街に戻る（重要：画面を正しく切り替え）
     backToTown() {
         this.hideShop();
+        this.hideWeaponSelect();
         this.showTown();
+    }
+
+    // 武器選択画面表示
+    showWeaponSelect() {
+        this.hideTown();
+        this.updateWeaponUI();
+        document.getElementById('weapon-screen').classList.remove('hidden');
+        this.logMessage('🗡️ 武器変更画面を開きました');
+    }
+
+    hideWeaponSelect() {
+        document.getElementById('weapon-screen').classList.add('hidden');
+    }
+
+    // 現在の武器UI更新
+    updateWeaponUI() {
+        const currentWeapon = this.weapons[this.player.currentWeapon];
+        const currentWeaponDisplay = document.getElementById('current-weapon-display');
+        
+        const attackTypeText = currentWeapon.types.map(type => this.attackTypes[type].name).join('・');
+        
+        currentWeaponDisplay.innerHTML = `
+            <span style="font-size: 2rem;">${currentWeapon.icon}</span>
+            <div>
+                <strong>${currentWeapon.name}</strong><br>
+                <span style="color: #f39c12;">${attackTypeText} | ${currentWeapon.hitCount}ヒット</span><br>
+                <span style="opacity: 0.8;">${currentWeapon.description}</span>
+            </div>
+        `;
+
+        // 武器オプションの現在装備状態更新
+        document.querySelectorAll('.weapon-option').forEach(option => {
+            const weaponKey = option.dataset.weapon;
+            const equipBtn = option.querySelector('.equip-btn');
+            
+            if (weaponKey === this.player.currentWeapon) {
+                option.classList.add('current');
+                equipBtn.textContent = '装備中';
+                equipBtn.disabled = true;
+            } else {
+                option.classList.remove('current');
+                equipBtn.textContent = '装備';
+                equipBtn.disabled = false;
+            }
+        });
+    }
+
+    // 武器装備
+    equipWeapon(weaponKey) {
+        if (weaponKey === this.player.currentWeapon) {
+            this.showTemporaryMessage('すでに装備しています', 'info');
+            return;
+        }
+
+        const oldWeapon = this.weapons[this.player.currentWeapon];
+        const newWeapon = this.weapons[weaponKey];
+        
+        this.player.currentWeapon = weaponKey;
+        
+        this.logMessage(`🗡️ 武器を変更: ${oldWeapon.icon}${oldWeapon.name} → ${newWeapon.icon}${newWeapon.name}`);
+        this.showTemporaryMessage(`${newWeapon.icon}${newWeapon.name}を装備！`, 'success');
+        
+        this.updateWeaponUI();
+        this.updateUI(); // プレイヤースプライト更新
     }
 }
 

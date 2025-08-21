@@ -161,6 +161,10 @@
                         ⚔️ 冒険に出る
                         <span class="btn-description">戦闘を開始</span>
                     </button>
+                    <button id="weapon-btn" class="town-menu-btn weapon-menu">
+                        🗡️ 武器変更
+                        <span class="btn-description">装備する武器を変更</span>
+                    </button>
                     <button id="town-save-btn" class="town-menu-btn save-menu">
                         💾 セーブ
                         <span class="btn-description">ゲーム進行状況を保存</span>
@@ -171,6 +175,53 @@
                     <p>💰 所持金: <span id="town-gold">0</span>G</p>
                     <p>📊 レベル: <span id="town-level">1</span> (EXP: <span id="town-exp">0</span>/<span id="town-exp-next">50</span>)</p>
                 </div>
+            </div>
+        </div>
+
+        <!-- 武器選択画面 -->
+        <div id="weapon-screen" class="screen hidden">
+            <div id="weapon-content">
+                <h2>🗡️ 武器変更</h2>
+                <p>装備する武器を選択してください。</p>
+                
+                <div id="current-weapon-info">
+                    <h3>現在の装備</h3>
+                    <div id="current-weapon-display"></div>
+                </div>
+                
+                <div id="weapon-selection">
+                    <div class="weapon-option" data-weapon="sword">
+                        <div class="weapon-icon">⚔️</div>
+                        <div class="weapon-details">
+                            <h4>剣</h4>
+                            <p class="weapon-type">斬撃・突き | 2ヒット</p>
+                            <p class="weapon-desc">バランスの取れた武器</p>
+                        </div>
+                        <button class="equip-btn">装備</button>
+                    </div>
+                    
+                    <div class="weapon-option" data-weapon="club">
+                        <div class="weapon-icon">🏏</div>
+                        <div class="weapon-details">
+                            <h4>棍棒</h4>
+                            <p class="weapon-type">打撃 | 3ヒット</p>
+                            <p class="weapon-desc">連続攻撃が得意</p>
+                        </div>
+                        <button class="equip-btn">装備</button>
+                    </div>
+                    
+                    <div class="weapon-option" data-weapon="axe">
+                        <div class="weapon-icon">🪓</div>
+                        <div class="weapon-details">
+                            <h4>斧</h4>
+                            <p class="weapon-type">打撃・斬撃 | 1ヒット</p>
+                            <p class="weapon-desc">一撃が重い</p>
+                        </div>
+                        <button class="equip-btn">装備</button>
+                    </div>
+                </div>
+                
+                <button id="weapon-back" class="back-btn">街に戻る</button>
             </div>
         </div>
 
