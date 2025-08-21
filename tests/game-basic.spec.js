@@ -54,25 +54,46 @@ test.describe('🎮 Epic Battle RPG - Basic Functionality', () => {
     await page.waitForTimeout(300);
   });
 
-  test('🔧 Basic error handling', async ({ page }) => {
+  test('🔧 JavaScript error detection', async ({ page }) => {
     // Test JavaScript error handling
     const consoleErrors = [];
+    const pageErrors = [];
+    
     page.on('console', msg => {
       if (msg.type() === 'error') {
         consoleErrors.push(msg.text());
       }
     });
     
-    // Perform basic actions
+    page.on('pageerror', error => {
+      pageErrors.push(error.message);
+    });
+    
+    // Perform actions that might trigger errors
     await page.locator('#attack-btn').click();
+    await page.waitForTimeout(1000);
+    
+    await page.locator('#save-btn').click();
     await page.waitForTimeout(500);
     
+    await page.locator('#load-btn').click();
+    await page.waitForTimeout(500);
+    
+    await page.locator('#attack-btn').click();
+    await page.waitForTimeout(1000);
+    
     // Check for critical errors
-    const criticalErrors = consoleErrors.filter(err => 
+    const allErrors = [...consoleErrors, ...pageErrors];
+    const criticalErrors = allErrors.filter(err => 
       err.includes('TypeError') || 
       err.includes('ReferenceError') ||
-      err.includes('is not defined')
+      err.includes('is not defined') ||
+      err.includes('attackMultiplier')
     );
+    
+    if (criticalErrors.length > 0) {
+      console.log('Critical errors found:', criticalErrors);
+    }
     
     expect(criticalErrors.length).toBe(0);
   });

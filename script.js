@@ -173,6 +173,12 @@ class BattleRPG {
         if (!this.canPlayerAct()) return;
 
         const weapon = this.weapons[this.player.currentWeapon];
+        if (!weapon) {
+            console.error('Weapon not found:', this.player.currentWeapon);
+            this.player.currentWeapon = 'sword'; // デフォルトにリセット
+            return;
+        }
+        
         const weaponAttack = Math.floor(this.player.attack * weapon.attackMultiplier);
         const damage = this.calculateDamage(weaponAttack, this.enemy.defense);
         const isCritical = Math.random() < 0.15 + (this.player.combo * 0.05); // コンボでクリティカル率上昇
@@ -770,9 +776,14 @@ class BattleRPG {
             
             // データ復元
             this.gameState = saveData.gameState;
-            this.player = saveData.player;
+            this.player = { ...this.player, ...saveData.player };
             this.items = saveData.items;
             this.enemy = saveData.enemy;
+            
+            // currentWeaponの安全確認
+            if (!this.player.currentWeapon || !this.weapons[this.player.currentWeapon]) {
+                this.player.currentWeapon = 'sword';
+            }
 
             // 敵が存在する場合の処理
             if (this.enemy) {
