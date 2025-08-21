@@ -54,6 +54,58 @@ test.describe('🎮 Epic Battle RPG - Basic Functionality', () => {
     await page.waitForTimeout(300);
   });
 
+  test('🔧 Save-Load-Attack Integration (Critical Bug Fix)', async ({ page }) => {
+    // 前回の問題: ロード後に攻撃ボタンが無反応になるバグのテスト
+    const consoleErrors = [];
+    const pageErrors = [];
+    
+    page.on('console', msg => {
+      if (msg.type() === 'error') {
+        consoleErrors.push(msg.text());
+      }
+    });
+    
+    page.on('pageerror', error => {
+      pageErrors.push(error.message);
+    });
+    
+    // Step 1: 初期攻撃（成功確認）
+    await page.locator('#attack-btn').click();
+    await page.waitForTimeout(1000);
+    
+    const battleLog = page.locator('#log-content');
+    await expect(battleLog).toContainText('ダメージ');
+    
+    // Step 2: セーブ・ロード
+    await page.locator('#save-btn').click();
+    await page.waitForTimeout(500);
+    await page.locator('#load-btn').click(); 
+    await page.waitForTimeout(500);
+    
+    // Step 3: ロード後の攻撃（ここでエラーが発生していた）
+    await page.locator('#attack-btn').click();
+    await page.waitForTimeout(1000);
+    
+    // ロード後も攻撃が正常に動作することを確認
+    await expect(battleLog).toContainText('ダメージ');
+    
+    // JavaScript エラーの確認
+    const allErrors = [...consoleErrors, ...pageErrors];
+    const criticalErrors = allErrors.filter(err => 
+      err.includes('TypeError') || 
+      err.includes('ReferenceError') ||
+      err.includes('is not defined') ||
+      err.includes('attackMultiplier') ||
+      err.includes('Cannot read properties of undefined')
+    );
+    
+    if (criticalErrors.length > 0) {
+      console.log('Critical errors found:', criticalErrors);
+    }
+    
+    expect(criticalErrors.length).toBe(0);
+  });
+
   test('🔧 JavaScript error detection', async ({ page }) => {
     // Test JavaScript error handling
     const consoleErrors = [];

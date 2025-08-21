@@ -269,10 +269,16 @@ class BattleRPG {
         if (!this.canPlayerAct()) return;
 
         const weapon = this.weapons[this.player.currentWeapon];
-        if (!weapon) {
-            console.error('Weapon not found:', this.player.currentWeapon);
-            this.player.currentWeapon = 'sword'; // デフォルトにリセット
-            return;
+        if (!weapon || typeof weapon.attackMultiplier !== 'number' || !Array.isArray(weapon.types)) {
+            console.error('Invalid weapon data:', {
+                currentWeapon: this.player.currentWeapon,
+                weapon: weapon,
+                weaponsKeys: Object.keys(this.weapons)
+            });
+            this.player.currentWeapon = 'sword';
+            this.logMessage('⚠️ 武器データが不正のため、剣に変更しました。');
+            // 再帰的に安全な武器で実行
+            return this.playerAttack();
         }
         
         const weaponAttack = Math.floor(this.player.attack * weapon.attackMultiplier);
@@ -977,9 +983,10 @@ class BattleRPG {
                 gameState: this.gameState,
                 player: this.player,
                 items: this.items,
+                weapons: this.weapons, // 武器の所有状態を保存
                 enemy: this.enemy,
                 saveTime: new Date().toISOString(),
-                version: "0.37"
+                version: "0.38"
             };
 
             localStorage.setItem('epicBattleRPG_save', JSON.stringify(saveData));
@@ -1010,9 +1017,21 @@ class BattleRPG {
             this.items = saveData.items;
             this.enemy = saveData.enemy;
             
-            // currentWeaponの安全確認
-            if (!this.player.currentWeapon || !this.weapons[this.player.currentWeapon]) {
+            // 武器データの復元（v0.38以降）
+            if (saveData.weapons) {
+                // 武器の所有状態を安全に復元
+                Object.keys(this.weapons).forEach(weaponKey => {
+                    if (saveData.weapons[weaponKey] && saveData.weapons[weaponKey].owned !== undefined) {
+                        this.weapons[weaponKey].owned = saveData.weapons[weaponKey].owned;
+                    }
+                });
+            }
+            
+            // currentWeaponの安全確認と修正
+            if (!this.player.currentWeapon || !this.weapons[this.player.currentWeapon] || !this.weapons[this.player.currentWeapon].owned) {
+                console.warn('Invalid currentWeapon, resetting to sword:', this.player.currentWeapon);
                 this.player.currentWeapon = 'sword';
+                this.logMessage('⚠️ 無効な武器のため、剣に変更しました。');
             }
 
             // 敵が存在する場合の処理
