@@ -191,7 +191,6 @@ class BattleRPG {
 
         this.enemy.hp = Math.max(0, this.enemy.hp - finalDamage);
 
-        const weapon = this.weapons[this.player.currentWeapon];
         const attackTypeText = weapon.types.map(type => this.attackTypes[type].name).join('・');
         
         if (isCritical) {

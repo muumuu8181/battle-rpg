@@ -1,0 +1,23 @@
+{
+  "name": "epic-battle-rpg",
+  "version": "0.32.0",
+  "description": "爽快戦闘システムを搭載したHTML5ベースのバトルRPG",
+  "main": "index.html",
+  "scripts": {
+    "test": "playwright test",
+    "test:headed": "playwright test --headed",
+    "test:ui": "playwright test --ui",
+    "test:debug": "playwright test --debug",
+    "serve": "python3 -m http.server 8080",
+    "install-deps": "npm install && npx playwright install"
+  },
+  "keywords": ["rpg", "game", "html5", "battle", "javascript", "爽快"],
+  "author": "Claude Code Force",
+  "license": "MIT",
+  "devDependencies": {
+    "@playwright/test": "^1.45.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
