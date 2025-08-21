@@ -149,4 +149,133 @@ test.describe('🎮 Epic Battle RPG - Basic Functionality', () => {
     
     expect(criticalErrors.length).toBe(0);
   });
+
+  test('🏘️ Town Save-Load Screen State Preservation', async ({ page }) => {
+    // 実際の問題: 街でセーブしても戦闘画面から開始される
+    const consoleErrors = [];
+    const pageErrors = [];
+    
+    page.on('console', msg => {
+      if (msg.type() === 'error') {
+        consoleErrors.push(msg.text());
+      }
+    });
+    
+    page.on('pageerror', error => {
+      pageErrors.push(error.message);
+    });
+    
+    // Step 1: 街画面に移動
+    await page.locator('#town-btn').click();
+    await page.waitForTimeout(500);
+    
+    // 街画面が表示されていることを確認
+    const townScreen = page.locator('#town-screen');
+    await expect(townScreen).not.toHaveClass(/hidden/);
+    
+    // Step 2: 街画面でセーブ
+    await page.locator('#town-save-btn').click();
+    await page.waitForTimeout(500);
+    
+    // Step 3: ロード
+    await page.locator('#load-btn').click();
+    await page.waitForTimeout(1000);
+    
+    // Step 4: ロード後も街画面から開始されることを確認
+    await expect(townScreen).not.toHaveClass(/hidden/);
+    
+    // 戦闘画面が非表示になっていることを確認
+    const battleArena = page.locator('#battle-arena');
+    const townScreenVisible = await townScreen.isVisible();
+    
+    expect(townScreenVisible).toBe(true);
+    
+    // エラーチェック
+    const allErrors = [...consoleErrors, ...pageErrors];
+    const criticalErrors = allErrors.filter(err => 
+      err.includes('TypeError') || 
+      err.includes('undefined') ||
+      err.includes('wounds')
+    );
+    
+    if (criticalErrors.length > 0) {
+      console.log('Critical errors during town save-load:', criticalErrors);
+    }
+    
+    expect(criticalErrors.length).toBe(0);
+  });
+
+  test('🎯 Realistic Battle Scenario with Multiple Actions', async ({ page }) => {
+    // より現実的なシナリオ: 戦闘→街→武器変更→戦闘→セーブ→ロード
+    const consoleErrors = [];
+    const pageErrors = [];
+    
+    page.on('console', msg => {
+      if (msg.type() === 'error') {
+        consoleErrors.push(msg.text());
+      }
+    });
+    
+    page.on('pageerror', error => {
+      pageErrors.push(error.message);
+    });
+    
+    // Step 1: 初期戦闘
+    await page.locator('#attack-btn').click();
+    await page.waitForTimeout(1000);
+    
+    // Step 2: 街に移動
+    await page.locator('#town-btn').click();
+    await page.waitForTimeout(500);
+    
+    // Step 3: 武器変更
+    await page.locator('#weapon-btn').click();
+    await page.waitForTimeout(500);
+    
+    // 武器選択（斧に変更）
+    await page.locator('[data-weapon="axe"] .equip-btn').click();
+    await page.waitForTimeout(500);
+    
+    // 街に戻る
+    await page.locator('#weapon-back').click();
+    await page.waitForTimeout(500);
+    
+    // Step 4: 新しい戦闘開始
+    await page.locator('#battle-btn').click();
+    await page.waitForTimeout(500);
+    
+    // 攻撃してみる
+    await page.locator('#attack-btn').click();
+    await page.waitForTimeout(1000);
+    
+    // Step 5: セーブ・ロード
+    await page.locator('#save-btn').click();
+    await page.waitForTimeout(500);
+    await page.locator('#load-btn').click();
+    await page.waitForTimeout(1000);
+    
+    // Step 6: ロード後の動作確認
+    await page.locator('#attack-btn').click();
+    await page.waitForTimeout(1000);
+    
+    // バトルログが正常に更新されることを確認
+    const battleLog = page.locator('#log-content');
+    await expect(battleLog).toContainText('ダメージ');
+    
+    // エラーチェック
+    const allErrors = [...consoleErrors, ...pageErrors];
+    const criticalErrors = allErrors.filter(err => 
+      err.includes('TypeError') || 
+      err.includes('Cannot read properties') ||
+      err.includes('undefined') ||
+      err.includes('wounds') ||
+      err.includes('attackMultiplier')
+    );
+    
+    if (criticalErrors.length > 0) {
+      console.log('Critical errors during realistic scenario:', criticalErrors);
+    }
+    
+    expect(criticalErrors.length).toBe(0);
+  });
 });

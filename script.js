@@ -1039,14 +1039,33 @@ class BattleRPG {
     // セーブ機能
     saveGame() {
         try {
+            // 現在の画面状態を判定
+            let currentScreen = 'battle';
+            if (!document.getElementById('town-screen').classList.contains('hidden')) {
+                currentScreen = 'town';
+            } else if (!document.getElementById('shop-screen').classList.contains('hidden')) {
+                currentScreen = 'shop';
+            } else if (!document.getElementById('weapon-screen').classList.contains('hidden')) {
+                currentScreen = 'weapon';
+            } else if (!document.getElementById('weapon-shop-screen').classList.contains('hidden')) {
+                currentScreen = 'weapon-shop';
+            } else if (!document.getElementById('help-screen').classList.contains('hidden')) {
+                currentScreen = 'help';
+            }
+
             const saveData = {
                 gameState: this.gameState,
                 player: this.player,
                 items: this.items,
                 weapons: this.weapons, // 武器の所有状態を保存
                 enemy: this.enemy,
+                battleState: {
+                    isBattleActive: this.isBattleActive,
+                    isPlayerTurn: this.isPlayerTurn,
+                    currentScreen: currentScreen
+                },
                 saveTime: new Date().toISOString(),
-                version: "0.38"
+                version: "0.41"
             };
 
             localStorage.setItem('epicBattleRPG_save', JSON.stringify(saveData));
@@ -1124,6 +1143,49 @@ class BattleRPG {
                 this.spawnNewEnemy();
             }
 
+            // 戦闘状態の復元
+            if (saveData.battleState) {
+                this.isBattleActive = saveData.battleState.isBattleActive || false;
+                this.isPlayerTurn = saveData.battleState.isPlayerTurn || true;
+                
+                // 画面状態の復元
+                const currentScreen = saveData.battleState.currentScreen || 'town';
+                console.log('Restoring screen state:', currentScreen);
+                
+                // すべての画面を隠す
+                this.hideAllScreens();
+                
+                // 保存された画面を表示
+                switch (currentScreen) {
+                    case 'town':
+                        this.showTownScreen();
+                        break;
+                    case 'shop':
+                        this.showShopScreen();
+                        break;
+                    case 'weapon':
+                        this.showWeaponScreen();
+                        break;
+                    case 'weapon-shop':
+                        this.showWeaponShopScreen();
+                        break;
+                    case 'help':
+                        this.showHelp();
+                        break;
+                    case 'battle':
+                    default:
+                        // 戦闘画面（デフォルト状態）
+                        this.isBattleActive = true;
+                        break;
+                }
+            } else {
+                // 旧バージョンのセーブデータの場合は街画面から開始
+                console.log('Old save data detected, starting from town');
+                this.hideAllScreens();
+                this.showTownScreen();
+                this.isBattleActive = false;
+            }
+
             this.updateUI();
             this.clearLog();
             
@@ -1178,11 +1240,46 @@ class BattleRPG {
         }
     }
 
+    // 全画面を非表示にする共通メソッド
+    hideAllScreens() {
+        document.getElementById('town-screen').classList.add('hidden');
+        document.getElementById('shop-screen').classList.add('hidden');
+        document.getElementById('weapon-screen').classList.add('hidden');
+        document.getElementById('weapon-shop-screen').classList.add('hidden');
+        document.getElementById('help-screen').classList.add('hidden');
+        document.getElementById('result-screen').classList.add('hidden');
+        this.hideActionPanel(); // アクションパネルも非表示
+    }
+
+    // 個別の画面表示メソッド（統一化）
+    showTownScreen() {
+        this.hideAllScreens();
+        this.updateTownUI();
+        document.getElementById('town-screen').classList.remove('hidden');
+    }
+
+    showShopScreen() {
+        this.hideAllScreens();
+        this.updateShopUI();
+        document.getElementById('shop-screen').classList.remove('hidden');
+    }
+
+    showWeaponScreen() {
+        this.hideAllScreens();
+        this.updateWeaponUI();
+        document.getElementById('weapon-screen').classList.remove('hidden');
+    }
+
+    showWeaponShopScreen() {
+        this.hideAllScreens();
+        this.updateWeaponShopUI();
+        document.getElementById('weapon-shop-screen').classList.remove('hidden');
+    }
+
     // 街機能
     showTown() {
         this.hideResultScreen();
-        this.updateTownUI();
-        document.getElementById('town-screen').classList.remove('hidden');
+        this.showTownScreen();
         this.logMessage('🏘️ 冒険者の街に到着しました。');
     }
 
@@ -1213,9 +1310,7 @@ class BattleRPG {
 
     // ショップ機能
     showShop() {
-        this.hideTown();
-        this.updateShopUI();
-        document.getElementById('shop-screen').classList.remove('hidden');
+        this.showShopScreen();
         this.logMessage('🏪 アイテムショップへようこそ！');
     }
 
@@ -1302,20 +1397,15 @@ class BattleRPG {
         this.logMessage('⚔️ 冒険に出発！新たな敵との遭遇...');
     }
 
-    // 各画面から街に戻る（重要：画面を正しく切り替え）
+    // 各画面から街に戻る（統一化）
     backToTown() {
-        this.hideShop();
-        this.hideWeaponSelect();
-        this.hideWeaponShop();
-        document.getElementById('help-screen').classList.add('hidden'); // ヘルプ画面も非表示
-        this.showTown();
+        this.showTownScreen();
+        this.logMessage('🏘️ 街に戻りました。');
     }
 
     // 武器選択画面表示
     showWeaponSelect() {
-        this.hideTown();
-        this.updateWeaponUI();
-        document.getElementById('weapon-screen').classList.remove('hidden');
+        this.showWeaponScreen();
         this.logMessage('🗡️ 武器変更画面を開きました');
     }
 
@@ -1386,7 +1476,7 @@ class BattleRPG {
 
     // ヘルプ画面表示
     showHelp() {
-        this.hideTown();
+        this.hideAllScreens();
         document.getElementById('help-screen').classList.remove('hidden');
         this.logMessage('❓ システムガイドを表示しました。');
     }
@@ -1400,9 +1490,7 @@ class BattleRPG {
 
     // 武器屋システム
     showWeaponShop() {
-        this.hideTown();
-        this.updateWeaponShopUI();
-        document.getElementById('weapon-shop-screen').classList.remove('hidden');
+        this.showWeaponShopScreen();
         this.logMessage('🗡️ 武器屋にようこそ！強力な武器を取り揃えております！');
     }
 
