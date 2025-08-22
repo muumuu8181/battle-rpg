@@ -296,22 +296,9 @@ class BattleRPG {
         // 現在の防御力でダメージ計算（傷口効果込み）
         const baseDamage = this.calculatePhysicalDamage(weaponAttack);
         
-        // 弱点攻撃の場合は傷口システムで処理するため、ここでは弱点倍率を適用しない
-        // 代わりに初回弱点攻撃時のみ1.3倍ボーナスを適用
-        let damage = baseDamage;
-        if (appliedWounds.length > 0) {
-            // 弱点攻撃で新たに傷をつけた場合、初回ボーナス
-            const isFirstHit = appliedWounds.some(wound => {
-                const woundType = wound.includes('斬撃') ? 'slash' : 
-                                 wound.includes('打撃') ? 'blunt' : 
-                                 wound.includes('突き') ? 'pierce' : null;
-                return woundType && this.enemy.wounds[woundType] === 1;
-            });
-            
-            if (isFirstHit) {
-                damage = Math.floor(baseDamage * 1.3); // 初回弱点攻撃ボーナス
-            }
-        }
+        // 弱点システム: 固定1.5倍ダメージ
+        const weaknessMultiplier = this.calculateWeaknessMultiplier(weapon.types, null);
+        let damage = Math.floor(baseDamage * weaknessMultiplier);
         
         const isCritical = Math.random() < 0.15 + (this.player.combo * 0.05); // コンボでクリティカル率上昇
         const finalDamage = isCritical ? Math.floor(damage * 2) : damage;
@@ -331,12 +318,13 @@ class BattleRPG {
 
         const attackTypeText = weapon.types.map(type => this.attackTypes[type].name).join('・');
         const woundText = appliedWounds.length > 0 ? `🩸(${appliedWounds.join('・')})` : '';
-        const defenseInfo = this.enemy ? `防御:${this.enemy.currentPhysicalDefense}` : '';
+        const defenseInfo = this.enemy ? `[防御:${this.enemy.currentPhysicalDefense}]` : '';
+        const weaknessText = this.getWeaknessText(weapon.types, null);
         
         if (isCritical) {
-            this.logMessage(`💥 クリティカルヒット！ ${weapon.icon}${weapon.name}(${attackTypeText})で${finalDamage}ダメージ！${woundText}${defenseInfo}(コンボ: ${this.player.combo})`);
+            this.logMessage(`💥 クリティカルヒット！ ${weapon.icon}${weapon.name}(${attackTypeText})${weaknessText}で${finalDamage}ダメージ！${woundText}${defenseInfo}`);
         } else {
-            this.logMessage(`${weapon.icon} ${weapon.name}(${attackTypeText})で${finalDamage}ダメージ！${woundText}${defenseInfo}(コンボ: ${this.player.combo})`);
+            this.logMessage(`${weapon.icon} ${weapon.name}(${attackTypeText})${weaknessText}で${finalDamage}ダメージ！${woundText}${defenseInfo}`);
         }
 
         this.updateUI();
@@ -594,13 +582,13 @@ class BattleRPG {
             };
         }
         
-        // 物理系傷口の累積効果（傷1つにつき防御力15%減少、最大75%減少）
+        // 物理系傷口の累積効果（傷1つにつき防御力10%減少、最大60%減少）
         const physicalWounds = (this.enemy.wounds.slash || 0) + (this.enemy.wounds.blunt || 0) + (this.enemy.wounds.pierce || 0);
-        const physicalReduction = Math.min(physicalWounds * 0.15, 0.75);
+        const physicalReduction = Math.min(physicalWounds * 0.10, 0.60);
         
-        // 魔法系傷口の累積効果（傷1つにつき防御力15%減少、最大75%減少）
+        // 魔法系傷口の累積効果（傷1つにつき防御力10%減少、最大60%減少）
         const magicalWounds = (this.enemy.wounds.fire || 0) + (this.enemy.wounds.lightning || 0) + (this.enemy.wounds.holy || 0) + (this.enemy.wounds.ice || 0);
-        const magicalReduction = Math.min(magicalWounds * 0.15, 0.75);
+        const magicalReduction = Math.min(magicalWounds * 0.10, 0.60);
         
         // 防御力減少を適用（傷が多いほど防御力が下がる）
         this.enemy.currentPhysicalDefense = Math.floor(this.enemy.basePhysicalDefense * (1 - physicalReduction));
