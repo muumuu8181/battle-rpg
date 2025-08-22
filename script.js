@@ -296,9 +296,22 @@ class BattleRPG {
         // 現在の防御力でダメージ計算（傷口効果込み）
         const baseDamage = this.calculatePhysicalDamage(weaponAttack);
         
-        // 弱点システム適用（固定1.5倍）
-        const weaknessMultiplier = this.calculateWeaknessMultiplier(weapon.types, null);
-        const damage = Math.floor(baseDamage * weaknessMultiplier);
+        // 弱点攻撃の場合は傷口システムで処理するため、ここでは弱点倍率を適用しない
+        // 代わりに初回弱点攻撃時のみ1.3倍ボーナスを適用
+        let damage = baseDamage;
+        if (appliedWounds.length > 0) {
+            // 弱点攻撃で新たに傷をつけた場合、初回ボーナス
+            const isFirstHit = appliedWounds.some(wound => {
+                const woundType = wound.includes('斬撃') ? 'slash' : 
+                                 wound.includes('打撃') ? 'blunt' : 
+                                 wound.includes('突き') ? 'pierce' : null;
+                return woundType && this.enemy.wounds[woundType] === 1;
+            });
+            
+            if (isFirstHit) {
+                damage = Math.floor(baseDamage * 1.3); // 初回弱点攻撃ボーナス
+            }
+        }
         
         const isCritical = Math.random() < 0.15 + (this.player.combo * 0.05); // コンボでクリティカル率上昇
         const finalDamage = isCritical ? Math.floor(damage * 2) : damage;
@@ -317,13 +330,13 @@ class BattleRPG {
         this.enemy.hp = Math.max(0, this.enemy.hp - finalDamage);
 
         const attackTypeText = weapon.types.map(type => this.attackTypes[type].name).join('・');
-        const weaknessText = this.getWeaknessText(weapon.types, null);
         const woundText = appliedWounds.length > 0 ? `🩸(${appliedWounds.join('・')})` : '';
+        const defenseInfo = this.enemy ? `防御:${this.enemy.currentPhysicalDefense}` : '';
         
         if (isCritical) {
-            this.logMessage(`💥 クリティカルヒット！ ${weapon.icon}${weapon.name}(${attackTypeText})で${finalDamage}ダメージ！${weaknessText}${woundText}(コンボ: ${this.player.combo})`);
+            this.logMessage(`💥 クリティカルヒット！ ${weapon.icon}${weapon.name}(${attackTypeText})で${finalDamage}ダメージ！${woundText}${defenseInfo}(コンボ: ${this.player.combo})`);
         } else {
-            this.logMessage(`${weapon.icon} ${weapon.name}(${attackTypeText})で${finalDamage}ダメージ！${weaknessText}${woundText}(コンボ: ${this.player.combo})`);
+            this.logMessage(`${weapon.icon} ${weapon.name}(${attackTypeText})で${finalDamage}ダメージ！${woundText}${defenseInfo}(コンボ: ${this.player.combo})`);
         }
 
         this.updateUI();
@@ -362,9 +375,22 @@ class BattleRPG {
             // 魔法ダメージ計算（傷口効果込み）
             const damage = this.calculateMagicalDamage(baseDamage);
             
-            // スキルの弱点システム適用（属性のみ、固定1.5倍）
-            const weaknessMultiplier = this.calculateWeaknessMultiplier(null, skill.element);
-            const weaknessDamage = Math.floor(damage * weaknessMultiplier);
+            // 属性弱点攻撃の場合は傷口システムで処理、初回のみボーナス
+            let weaknessDamage = damage;
+            if (appliedWounds.length > 0) {
+                // 属性弱点攻撃で新たに傷をつけた場合、初回ボーナス
+                const isFirstElementHit = appliedWounds.some(wound => {
+                    const elementType = wound.includes('炎') ? 'fire' : 
+                                       wound.includes('雷') ? 'lightning' : 
+                                       wound.includes('聖') ? 'holy' : 
+                                       wound.includes('氷') ? 'ice' : null;
+                    return elementType && this.enemy.wounds[elementType] === 1;
+                });
+                
+                if (isFirstElementHit) {
+                    weaknessDamage = Math.floor(damage * 1.4); // 初回属性弱点攻撃ボーナス
+                }
+            }
             
             const isCritical = Math.random() < 0.3; // スキルは高いクリティカル率
             const finalDamage = isCritical ? Math.floor(weaknessDamage * 1.5) : weaknessDamage;
@@ -381,9 +407,9 @@ class BattleRPG {
             this.enemy.hp = Math.max(0, this.enemy.hp - finalDamage);
 
             const critText = isCritical ? " クリティカル！" : "";
-            const weaknessText = this.getWeaknessText(null, skill.element);
             const woundText = appliedWounds.length > 0 ? `🩸(${appliedWounds.join('・')})` : '';
-            this.logMessage(`✨ ${skill.name}で${finalDamage}ダメージ！${weaknessText}${woundText}${critText}(コンボ: ${this.player.combo})`);
+            const defenseInfo = this.enemy ? `魔防:${this.enemy.currentMagicalDefense}` : '';
+            this.logMessage(`✨ ${skill.name}で${finalDamage}ダメージ！${woundText}${defenseInfo}${critText}(コンボ: ${this.player.combo})`);
         }
 
         this.updateUI();
@@ -521,9 +547,8 @@ class BattleRPG {
 
     // 傷口システム - 弱点攻撃による防御力減少
     applyWoundSystem(attackTypes, element) {
-        if (!this.enemy || !this.enemy.weaknesses) return;
+        if (!this.enemy || !this.enemy.weaknesses) return [];
         
-        const woundReduction = 0.2; // 20%防御減少
         let appliedWounds = [];
         
         // 攻撃タイプ弱点チェック
@@ -532,6 +557,7 @@ class BattleRPG {
                 if (this.enemy.weaknesses.attackTypes.includes(attackType)) {
                     this.enemy.wounds[attackType]++;
                     appliedWounds.push(`${this.attackTypes[attackType].name}傷`);
+                    console.log(`Applied ${attackType} wound, total: ${this.enemy.wounds[attackType]}`);
                 }
             }
         }
@@ -543,6 +569,7 @@ class BattleRPG {
                 fire: "炎", lightning: "雷", holy: "聖", ice: "氷"
             };
             appliedWounds.push(`${elementNames[element] || element}傷`);
+            console.log(`Applied ${element} elemental wound, total: ${this.enemy.wounds[element]}`);
         }
         
         // 防御力を再計算（累積効果）
@@ -567,21 +594,24 @@ class BattleRPG {
             };
         }
         
-        // 物理系傷口の累積効果
+        // 物理系傷口の累積効果（傷1つにつき防御力15%減少、最大75%減少）
         const physicalWounds = (this.enemy.wounds.slash || 0) + (this.enemy.wounds.blunt || 0) + (this.enemy.wounds.pierce || 0);
-        const physicalReduction = Math.min(physicalWounds * 0.2, 0.8); // 最大80%減少
+        const physicalReduction = Math.min(physicalWounds * 0.15, 0.75);
         
-        // 魔法系傷口の累積効果  
+        // 魔法系傷口の累積効果（傷1つにつき防御力15%減少、最大75%減少）
         const magicalWounds = (this.enemy.wounds.fire || 0) + (this.enemy.wounds.lightning || 0) + (this.enemy.wounds.holy || 0) + (this.enemy.wounds.ice || 0);
-        const magicalReduction = Math.min(magicalWounds * 0.2, 0.8); // 最大80%減少
+        const magicalReduction = Math.min(magicalWounds * 0.15, 0.75);
         
-        // 現在の防御力を更新
+        // 防御力減少を適用（傷が多いほど防御力が下がる）
         this.enemy.currentPhysicalDefense = Math.floor(this.enemy.basePhysicalDefense * (1 - physicalReduction));
         this.enemy.currentMagicalDefense = Math.floor(this.enemy.baseMagicalDefense * (1 - magicalReduction));
         
-        // 最低1は保持
+        // 最低防御力を確保（最低1は保持）
         this.enemy.currentPhysicalDefense = Math.max(1, this.enemy.currentPhysicalDefense);
         this.enemy.currentMagicalDefense = Math.max(1, this.enemy.currentMagicalDefense);
+        
+        // デバッグ情報をログに出力
+        console.log(`Defense recalculated: Physical wounds: ${physicalWounds}, reduction: ${physicalReduction * 100}%, defense: ${this.enemy.basePhysicalDefense} → ${this.enemy.currentPhysicalDefense}`);
     }
     
     // 傷口インジケーター更新
@@ -781,7 +811,7 @@ class BattleRPG {
         this.disablePlayerActions();
         setTimeout(() => {
             this.enemyTurn();
-        }, 800);
+        }, 400);
     }
 
     updateUI() {
@@ -898,7 +928,7 @@ class BattleRPG {
         character.classList.add(animation);
         setTimeout(() => {
             character.classList.remove(animation);
-        }, 600);
+        }, 300);
     }
 
     showDamageNumber(damage, target, isCritical = false, isHeal = false) {
@@ -918,7 +948,7 @@ class BattleRPG {
         
         setTimeout(() => {
             damageArea.removeChild(damageDiv);
-        }, 1800);
+        }, 900);
     }
 
     // 連続ヒット表示システム（武器別）
@@ -933,13 +963,13 @@ class BattleRPG {
         damages.forEach((damage, index) => {
             setTimeout(() => {
                 this.createMultiHitNumber(damage, rect, index, hitCount, isCritical, currentWeapon);
-            }, index * 120); // 武器に応じて間隔調整
+            }, index * 60); // 武器に応じて間隔調整（半分に短縮）
         });
         
         // 合計ダメージ表示
         setTimeout(() => {
             this.createTotalDamageNumber(totalDamage, rect, isCritical, currentWeapon);
-        }, hitCount * 120 + 300);
+        }, hitCount * 60 + 150);
     }
 
     // ダメージを複数ヒットに分割
