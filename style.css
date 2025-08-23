@@ -29,6 +29,22 @@ body {
     justify-content: space-between;
     align-items: center;
     border-bottom: 2px solid #4a90e2;
+    position: relative;
+}
+
+#version-display {
+    position: absolute;
+    top: 1rem;
+    right: 18rem;
+    background: rgba(255, 255, 255, 0.1);
+    color: #bdc3c7;
+    padding: 0.3rem 0.6rem;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: bold;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(5px);
+    z-index: 10;
 }
 
 #game-header h1 {
@@ -341,18 +357,7 @@ body {
     transform: none;
 }
 
-/* アクションパネル */
-.action-panel {
-    position: absolute;
-    bottom: 100%;
-    left: 0;
-    right: 0;
-    background: rgba(0, 0, 0, 0.9);
-    border-radius: 10px;
-    padding: 1rem;
-    border: 2px solid #4a90e2;
-    animation: panelSlideUp 0.3s ease-out;
-}
+/* アクションパネル（削除済み - 競合防止） */
 
 .action-panel h4 {
     margin-bottom: 1rem;
@@ -1226,5 +1231,230 @@ body {
         animation-duration: 0.01ms !important;
         animation-iteration-count: 1 !important;
         transition-duration: 0.01ms !important;
+    }
+}
+
+/* ========================================
+   ドラゴンクエスト風スキルメニュー
+======================================== */
+
+/* パネルヘッダー */
+.panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 0;
+    border-bottom: 2px solid #4a90e2;
+    margin-bottom: 0.8rem;
+}
+
+.panel-header h4 {
+    font-size: 1.1rem;
+    color: #f1c40f;
+    text-shadow: 0 0 5px rgba(241, 196, 15, 0.3);
+}
+
+.current-mp {
+    background: linear-gradient(135deg, #3498db, #2980b9);
+    padding: 0.3rem 0.8rem;
+    border-radius: 15px;
+    font-size: 0.9rem;
+    font-weight: bold;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* 縦型メニュー(横2列表示・大サイズ) */
+.vertical-menu {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 0.3rem !important;
+    max-height: none !important;
+    min-height: 3000px !important;
+    height: 3000px !important;
+    overflow-y: auto;
+    padding-right: 0.5rem;
+    align-items: start;
+}
+
+/* スクロールバースタイル */
+.vertical-menu::-webkit-scrollbar {
+    width: 6px;
+}
+
+.vertical-menu::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+}
+
+.vertical-menu::-webkit-scrollbar-thumb {
+    background: linear-gradient(135deg, #4a90e2, #357abd);
+    border-radius: 3px;
+}
+
+.vertical-menu::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(135deg, #357abd, #2e5d8a);
+}
+
+/* 縦型スキルオプション(コンパクト版) */
+.skill-option.vertical {
+    display: flex !important;
+    flex-direction: column;
+    align-items: flex-start !important;
+    padding: 0.5rem 0.7rem !important;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.04)) !important;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    border-radius: 6px !important;
+    transition: all 0.2s ease !important;
+    cursor: pointer;
+    width: 100% !important;
+    text-align: left !important;
+    position: relative;
+    overflow: hidden;
+    min-height: 60px;
+    height: auto;
+}
+
+.skill-option.vertical:hover:not(.disabled) {
+    background: linear-gradient(135deg, rgba(116, 185, 255, 0.15), rgba(75, 144, 226, 0.1)) !important;
+    border-color: #4a90e2 !important;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(74, 144, 226, 0.2);
+}
+
+.skill-option.vertical:active:not(.disabled) {
+    transform: translateY(0);
+    box-shadow: 0 2px 4px rgba(74, 144, 226, 0.2);
+}
+
+/* MP不足スタイル */
+.skill-option.vertical.disabled {
+    opacity: 0.4 !important;
+    cursor: not-allowed !important;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.01)) !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+/* スキル情報レイアウト(コンパクト版) */
+.skill-info {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    width: 100%;
+    margin-bottom: 0.2rem;
+}
+
+.skill-icon {
+    font-size: 1.1rem;
+    width: 1.5rem;
+    display: flex;
+    justify-content: center;
+    filter: drop-shadow(0 0 2px currentColor);
+    flex-shrink: 0;
+}
+
+.skill-name {
+    font-size: 0.85rem;
+    font-weight: bold;
+    color: #ecf0f1;
+    flex: 1;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+    line-height: 1.2;
+}
+
+.skill-cost {
+    font-size: 0.7rem;
+    background: linear-gradient(135deg, #e67e22, #d35400);
+    color: white;
+    padding: 0.15rem 0.4rem;
+    border-radius: 8px;
+    font-weight: bold;
+    min-width: 40px;
+    text-align: center;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+/* MP不足時のコスト表示 */
+.skill-option.disabled .skill-cost {
+    background: linear-gradient(135deg, #7f8c8d, #95a5a6);
+    color: #bdc3c7;
+}
+
+.skill-desc {
+    font-size: 0.7rem;
+    color: #bdc3c7;
+    line-height: 1.2;
+    margin-top: 0.1rem;
+    font-style: italic;
+    text-shadow: 0 1px 1px rgba(0, 0, 0, 0.5);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+/* ホバー時の説明テキスト強調 */
+.skill-option.vertical:hover:not(.disabled) .skill-desc {
+    color: #ecf0f1;
+}
+
+/* アクションパネルを大きく表示 */
+.action-panel {
+    max-width: 95vw !important;
+    width: 95vw !important;
+    max-height: 90vh !important;
+    padding: 1.5rem !important;
+    position: fixed !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    z-index: 1000 !important;
+    overflow: auto !important;
+    background: rgba(0, 0, 0, 0.95) !important;
+    border-radius: 15px !important;
+    border: 2px solid #4a90e2 !important;
+}
+
+/* レスポンシブ対応 */
+@media (max-width: 768px) {
+    .vertical-menu {
+        max-height: 70vh;
+        min-height: 400px;
+        grid-template-columns: 1fr !important; /* スマホでは1列表示 */
+    }
+    
+    .skill-option.vertical {
+        padding: 0.5rem 0.6rem !important;
+        min-height: 55px;
+    }
+    
+    .skill-info {
+        gap: 0.4rem;
+    }
+    
+    .skill-icon {
+        font-size: 1rem;
+        width: 1.3rem;
+    }
+    
+    .skill-name {
+        font-size: 0.8rem;
+    }
+    
+    .skill-cost {
+        font-size: 0.65rem;
+        padding: 0.1rem 0.3rem;
+        min-width: 35px;
+    }
+    
+    .skill-desc {
+        font-size: 0.65rem;
+    }
+    
+    .action-panel {
+        width: 98vw !important;
+        max-height: 95vh !important;
+        padding: 1rem !important;
     }
 }

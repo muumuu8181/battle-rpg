@@ -143,10 +143,14 @@ class BattleRPG {
         };
 
         this.skills = {
-            fire: { name: "ファイア", cost: 10, power: 1.8, effect: "🔥", description: "炎の魔法で敵を焼く", element: "fire" },
-            heal: { name: "ヒール", cost: 15, power: 0.8, effect: "💚", description: "HPを回復する", element: "holy" },
-            thunder: { name: "サンダー", cost: 20, power: 2.2, effect: "⚡", description: "雷撃で大ダメージ", element: "lightning" },
-            critical: { name: "クリティカル", cost: 25, power: 3.0, effect: "💥", description: "必殺の一撃", element: "physical" }
+            fire: { name: "ファイア", cost: 10, power: 1.8, effect: "🔥", description: "炎の魔法で敵を焼く", element: "fire", icon: "🔥" },
+            heal: { name: "ヒール", cost: 15, power: 0.8, effect: "💚", description: "HPを回復する", element: "holy", icon: "✨" },
+            thunder: { name: "サンダー", cost: 20, power: 2.2, effect: "⚡", description: "雷撃で大ダメージ", element: "lightning", icon: "⚡" },
+            critical: { name: "クリティカル", cost: 25, power: 3.0, effect: "💥", description: "必殺の一撃", element: "physical", icon: "💥" },
+            ice: { name: "アイス", cost: 12, power: 1.6, effect: "❄️", description: "氷の魔法で敵を凍らせる", element: "ice", icon: "❄️" },
+            shield: { name: "シールド", cost: 8, power: 0.5, effect: "🛡️", description: "防御力を一時的に上げる", element: "defensive", icon: "🛡️" },
+            drain: { name: "ドレイン", cost: 18, power: 1.4, effect: "🧛", description: "敵のHPを吸収する", element: "dark", icon: "🌙" },
+            bless: { name: "ブレス", cost: 22, power: 2.0, effect: "🙏", description: "聖なる力で敵を清める", element: "holy", icon: "✨" }
         };
 
         this.items = {
@@ -171,6 +175,14 @@ class BattleRPG {
     }
 
     bindEvents() {
+        // ESCキーでパネルを閉じる
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && this.currentPanel) {
+                console.log('🔑 ESCキーでパネルを閉じる');
+                this.hideActionPanel();
+            }
+        });
+        
         // アクションボタン
         document.getElementById('attack-btn').addEventListener('click', () => this.playerAttack());
         document.getElementById('skill-btn').addEventListener('click', () => this.showSkillPanel());
@@ -232,7 +244,13 @@ class BattleRPG {
     }
 
     spawnNewEnemy() {
-        const template = this.enemyTemplates[Math.min(Math.floor(this.gameState.level / 2), this.enemyTemplates.length - 1)];
+        // レベルに応じた敵の候補をランダム選択（改善版）
+        // 最低2種類の敵が選択可能になるよう調整
+        const baseEnemyCount = Math.min(2 + Math.floor(this.gameState.level / 3), this.enemyTemplates.length);
+        const availableEnemies = this.enemyTemplates.slice(0, baseEnemyCount);
+        const template = availableEnemies[Math.floor(Math.random() * availableEnemies.length)];
+        
+        console.log(`🎲 敵選択: レベル${this.gameState.level} → 候補${availableEnemies.length}体 → ${template.name}`);
         const levelMultiplier = 1 + (this.gameState.level - 1) * 0.2;
         
         this.enemy = {
@@ -270,6 +288,12 @@ class BattleRPG {
         
         // 傷口インジケーターを初期化
         this.updateWoundIndicators();
+        
+        // プレイヤーアクションを確実に有効化（敗北後の操作不能問題を防止）
+        setTimeout(() => {
+            this.enablePlayerActions();
+            console.log('🔓 プレイヤーアクション有効化完了');
+        }, 50);
     }
 
     playerAttack() {
@@ -296,9 +320,15 @@ class BattleRPG {
         // 現在の防御力でダメージ計算（傷口効果込み）
         const baseDamage = this.calculatePhysicalDamage(weaponAttack);
         
-        // 弱点システム: 固定1.5倍ダメージ
+        // 弱点システム: 固定1.5倍ダメージ + 傷口追加ダメージ
         const weaknessMultiplier = this.calculateWeaknessMultiplier(weapon.types, null);
-        let damage = Math.floor(baseDamage * weaknessMultiplier);
+        let damage = Math.round(baseDamage * weaknessMultiplier);
+        
+        // 傷口による追加ダメージボーナス（弱点攻撃時のみ）
+        if (weaknessMultiplier > 1.0) {
+            const woundBonus = this.calculateWoundDamageBonus(weapon.types);
+            damage += woundBonus;
+        }
         
         const isCritical = Math.random() < 0.15 + (this.player.combo * 0.05); // コンボでクリティカル率上昇
         const finalDamage = isCritical ? Math.floor(damage * 2) : damage;
@@ -520,8 +550,8 @@ class BattleRPG {
 
     calculateDamage(attack, defense) {
         const baseDamage = attack - defense;
-        const variance = Math.random() * 0.4 + 0.8; // 80-120%の変動
-        return Math.max(1, Math.floor(baseDamage * variance));
+        const variance = Math.random() * 0.05 + 0.975; // 97.5-102.5%のより安定した変動
+        return Math.max(1, Math.round(baseDamage * variance));
     }
 
     // 物理・魔法別ダメージ計算
@@ -666,6 +696,22 @@ class BattleRPG {
         return multiplier;
     }
 
+    // 傷口による追加ダメージボーナス計算
+    calculateWoundDamageBonus(attackTypes) {
+        if (!this.enemy || !this.enemy.wounds || !attackTypes) return 0;
+        
+        let woundBonus = 0;
+        
+        // 攻撃タイプごとの傷口数をチェック
+        for (const attackType of attackTypes) {
+            const woundCount = this.enemy.wounds[attackType] || 0;
+            // 傷口1つにつき3ダメージのボーナス（最大4傷口まで）
+            woundBonus += Math.min(woundCount, 4) * 3;
+        }
+        
+        return woundBonus;
+    }
+
     // 弱点情報テキスト生成
     getWeaknessText(attackTypes, element) {
         const weaknesses = [];
@@ -738,14 +784,35 @@ class BattleRPG {
     }
 
     gameOver() {
+        console.log('💀 ゲームオーバー処理開始');
         this.isBattleActive = false;
+        console.log('🔒 戦闘状態無効化: isBattleActive =', this.isBattleActive);
+        this.disablePlayerActions();
+        console.log('🔒 プレイヤーアクション無効化実行');
+        
+        // 敗北時の状態をリセット
+        this.isPlayerTurn = true;
+        this.player.isGuarding = false;
+        console.log('🔄 プレイヤー状態リセット完了');
+        
         this.showResultScreen(false, false, 0);
         this.logMessage(`💀 ${this.player.name}は倒れた...`);
+        console.log('💀 ゲームオーバー処理完了');
     }
 
     nextBattle() {
+        console.log('⚔️ 次戦闘処理開始');
         this.hideResultScreen();
+        console.log('📄 結果画面非表示完了');
+        
+        // 敗北後の確実な状態リセット
+        this.isPlayerTurn = true;
+        this.player.isGuarding = false;
+        this.player.combo = 0;
+        console.log('🔄 戦闘状態完全リセット完了');
+        
         this.spawnNewEnemy();
+        console.log('👹 新敵生成完了:', this.enemy.name);
         this.updateUI();
         
         // アイテム少し回復
@@ -755,7 +822,14 @@ class BattleRPG {
             }
         });
         
+        // 確実にボタンを有効化
+        setTimeout(() => {
+            this.enablePlayerActions();
+            console.log('🔓 次戦闘でのボタン有効化完了');
+        }, 100);
+        
         this.logMessage(`⚔️ 次の戦闘開始！${this.enemy.name}が現れた！`);
+        console.log('⚔️ 次戦闘処理完了');
     }
 
     restart() {
@@ -783,15 +857,23 @@ class BattleRPG {
     }
 
     enablePlayerActions() {
-        document.querySelectorAll('.action-btn').forEach(btn => {
+        console.log('🔓 プレイヤーアクション有効化開始');
+        const actionBtns = document.querySelectorAll('.action-btn');
+        console.log('🎮 対象ボタン数:', actionBtns.length);
+        actionBtns.forEach(btn => {
             btn.disabled = false;
         });
+        console.log('🔓 プレイヤーアクション有効化完了');
     }
 
     disablePlayerActions() {
-        document.querySelectorAll('.action-btn').forEach(btn => {
+        console.log('🔒 プレイヤーアクション無効化開始');
+        const actionBtns = document.querySelectorAll('.action-btn');
+        console.log('🎮 対象ボタン数:', actionBtns.length);
+        actionBtns.forEach(btn => {
             btn.disabled = true;
         });
+        console.log('🔒 プレイヤーアクション無効化完了');
     }
 
     nextTurn() {
@@ -842,8 +924,92 @@ class BattleRPG {
 
     showSkillPanel() {
         this.hideActionPanel();
+        this.updateSkillPanelUI();
         document.getElementById('skill-panel').classList.remove('hidden');
         this.currentPanel = 'skill';
+        
+        // 戸るボタンのイベントリスナーを確実に再設定
+        const backBtn = document.getElementById('skill-back');
+        if (backBtn) {
+            // 既存のリスナーをクリアして再設定
+            backBtn.replaceWith(backBtn.cloneNode(true));
+            document.getElementById('skill-back').addEventListener('click', () => {
+                console.log('🔙 スキルパネルを閉じる');
+                this.hideActionPanel();
+            });
+        }
+        console.log('🎮 スキルパネルを表示');
+    }
+    
+    // スキルパネルUI更新(ドラゴンクエスト風)
+    updateSkillPanelUI() {
+        const skillGrid = document.querySelector('#skill-panel .skill-grid');
+        const mpDisplay = document.getElementById('skill-mp-display');
+        
+        // MP表示更新
+        if (mpDisplay) {
+            mpDisplay.textContent = `${this.player.mp}/${this.player.maxMp}`;
+        }
+        
+        skillGrid.innerHTML = '';
+        
+        // 利用可能なスキルを取得
+        const availableSkills = this.getAvailableSkills();
+        
+        availableSkills.forEach(([skillKey, skill]) => {
+            const skillBtn = document.createElement('button');
+            skillBtn.className = 'skill-option vertical';
+            skillBtn.dataset.skill = skillKey;
+            
+            // MP不足の場合は無効化
+            const canUse = this.player.mp >= skill.cost;
+            if (!canUse) {
+                skillBtn.classList.add('disabled');
+                skillBtn.disabled = true;
+            }
+            
+            // 属性アイコン付き表示
+            skillBtn.innerHTML = `
+                <div class="skill-info">
+                    <span class="skill-icon">${skill.icon}</span>
+                    <span class="skill-name">${skill.name}</span>
+                    <span class="skill-cost">MP:${skill.cost}</span>
+                </div>
+                <div class="skill-desc">${skill.description}</div>
+            `;
+            
+            skillBtn.addEventListener('click', () => {
+                if (canUse) this.useSkill(skillKey);
+            });
+            
+            skillGrid.appendChild(skillBtn);
+        });
+    }
+    
+    // レベルに応じて利用可能なスキルを取得
+    getAvailableSkills() {
+        const playerLevel = this.gameState.level;
+        const allSkills = Object.entries(this.skills);
+        
+        // レベルに応じてスキルを解放
+        return allSkills.filter(([skillKey, skill]) => {
+            switch(skillKey) {
+                case 'fire':
+                case 'heal':
+                case 'thunder':  // 初期から利用可能に変更
+                case 'critical': // 初期から利用可能に変更
+                    return true;
+                case 'ice':
+                case 'shield':
+                    return playerLevel >= 2;
+                case 'drain':
+                    return playerLevel >= 3;
+                case 'bless':
+                    return playerLevel >= 5;
+                default:
+                    return true;
+            }
+        });
     }
 
     showItemPanel() {
@@ -1083,7 +1249,7 @@ class BattleRPG {
                     currentScreen: currentScreen
                 },
                 saveTime: new Date().toISOString(),
-                version: "0.41"
+                version: "0.50"
             };
 
             localStorage.setItem('epicBattleRPG_save', JSON.stringify(saveData));

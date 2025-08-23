@@ -20,6 +20,7 @@
                 <button id="save-btn" class="save-btn">💾 セーブ</button>
                 <button id="load-btn" class="save-btn">📂 ロード</button>
             </div>
+            <div id="version-display">v0.50</div>
         </header>
 
         <!-- メインゲーム画面 -->
@@ -123,16 +124,16 @@
                     </button>
                 </div>
 
-                <!-- スキル選択パネル -->
+                <!-- スキル選択パネル(ドラゴンクエスト風) -->
                 <div id="skill-panel" class="action-panel hidden">
-                    <h4>スキル選択</h4>
-                    <div class="skill-grid">
-                        <button class="skill-option" data-skill="fire">🔥 ファイア (MP: 10)</button>
-                        <button class="skill-option" data-skill="heal">💚 ヒール (MP: 15)</button>
-                        <button class="skill-option" data-skill="thunder">⚡ サンダー (MP: 20)</button>
-                        <button class="skill-option" data-skill="critical">💥 クリティカル (MP: 25)</button>
+                    <div class="panel-header">
+                        <h4>✨ スキル選択</h4>
+                        <div class="current-mp">MP: <span id="skill-mp-display">--/--</span></div>
                     </div>
-                    <button id="skill-back" class="back-btn">戻る</button>
+                    <div class="skill-grid vertical-menu">
+                        <!-- スキルは動的に生成 -->
+                    </div>
+                    <button id="skill-back" class="back-btn">← 戻る</button>
                 </div>
 
                 <!-- アイテム選択パネル -->

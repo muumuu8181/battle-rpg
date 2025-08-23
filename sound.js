@@ -78,9 +78,34 @@ class SoundManager {
                     this.createTone(800, 0.2, 'sawtooth', 0.3);
                 }, 50);
                 break;
+            case 'ice':
+                // 氷の音
+                this.createChord([800, 600, 400], 0.4, 'sine', 0.25);
+                setTimeout(() => {
+                    this.createTone(200, 0.3, 'triangle', 0.2);
+                }, 150);
+                break;
             case 'heal':
                 // 回復音
                 this.createChord([523, 659, 784], 0.4, 'sine', 0.25); // C-E-G
+                break;
+            case 'shield':
+                // シールド音
+                this.createTone(400, 0.3, 'square', 0.3);
+                setTimeout(() => {
+                    this.createChord([350, 450, 550], 0.2, 'sine', 0.2);
+                }, 100);
+                break;
+            case 'drain':
+                // ドレイン音
+                this.createTone(150, 0.4, 'sawtooth', 0.3);
+                setTimeout(() => {
+                    this.createTone(300, 0.2, 'sine', 0.25);
+                }, 200);
+                break;
+            case 'bless':
+                // ブレス音
+                this.createChord([523, 659, 784, 1047], 0.5, 'sine', 0.2);
                 break;
             case 'critical':
                 // 必殺技音
