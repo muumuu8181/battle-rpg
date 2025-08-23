@@ -20,7 +20,7 @@
                 <button id="save-btn" class="save-btn">💾 セーブ</button>
                 <button id="load-btn" class="save-btn">📂 ロード</button>
             </div>
-            <div id="version-display">v0.50</div>
+            <div id="version-display">v0.56</div>
         </header>
 
         <!-- メインゲーム画面 -->
@@ -248,6 +248,16 @@
                         </div>
                         <button class="equip-btn">装備</button>
                     </div>
+                    
+                    <div class="weapon-option" data-weapon="bow">
+                        <div class="weapon-icon">🏹</div>
+                        <div class="weapon-details">
+                            <h4>弓</h4>
+                            <p class="weapon-type">突き・遠距離 | 1ヒット</p>
+                            <p class="weapon-desc">遠距離から狙撃</p>
+                        </div>
+                        <button class="equip-btn">装備</button>
+                    </div>
                 </div>
                 
                 <button id="weapon-back" class="back-btn">街に戻る</button>
@@ -337,6 +347,24 @@
                         </div>
                         <div class="item-price">300G</div>
                         <button class="buy-weapon-btn" data-weapon="battle_axe" data-price="300">購入</button>
+                    </div>
+                    
+                    <div class="shop-item">
+                        <div class="item-info">
+                            <span class="item-name">🏹 ロングボウ</span>
+                            <span class="item-effect">突き・遠距離 | 1ヒット | 攻撃力 1.3倍</span>
+                        </div>
+                        <div class="item-price">250G</div>
+                        <button class="buy-weapon-btn" data-weapon="longbow" data-price="250">購入</button>
+                    </div>
+                    
+                    <div class="shop-item">
+                        <div class="item-info">
+                            <span class="item-name">🏹 クロスボウ</span>
+                            <span class="item-effect">突き・遠距離 | 1ヒット | 攻撃力 1.6倍</span>
+                        </div>
+                        <div class="item-price">400G</div>
+                        <button class="buy-weapon-btn" data-weapon="crossbow" data-price="400">購入</button>
                     </div>
                     
                     <div class="shop-item">
@@ -460,7 +488,7 @@
         </div>
     </div>
 
-    <script src="sound.js"></script>
+    <script src="sound_fixed.js"></script>
     <script src="script.js"></script>
 </body>
 </html>

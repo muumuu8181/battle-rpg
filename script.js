@@ -15,7 +15,15 @@ class BattleRPG {
             hp: 100,
             maxMp: 50,
             mp: 50,
-            attack: 20,
+            // 物理・魔法独立ステータス
+            physicalAttack: 15,
+            magicalAttack: 10,
+            physicalLevel: 1,
+            magicalLevel: 1,
+            physicalExp: 0,
+            magicalExp: 0,
+            physicalExpToNext: 30,
+            magicalExpToNext: 25,
             defense: 10,
             level: 1,
             isGuarding: false,
@@ -92,6 +100,15 @@ class BattleRPG {
                 description: "一撃が重い",
                 owned: true
             },
+            bow: {
+                name: "弓",
+                icon: "🏹",
+                hitCount: 1,
+                types: ["pierce", "ranged"], // 突き+遠距離
+                attackMultiplier: 1.1,
+                description: "遠距離から狙撃",
+                owned: true
+            },
             steel_sword: {
                 name: "鋼の剣",
                 icon: "⚔️",
@@ -131,6 +148,26 @@ class BattleRPG {
                 description: "邪悪を滅する光",
                 owned: false,
                 price: 500
+            },
+            longbow: {
+                name: "ロングボウ",
+                icon: "🏹",
+                hitCount: 1,
+                types: ["pierce", "ranged"],
+                attackMultiplier: 1.3,
+                description: "長距離狙撃弓",
+                owned: false,
+                price: 250
+            },
+            crossbow: {
+                name: "クロスボウ",
+                icon: "🏹",
+                hitCount: 1,
+                types: ["pierce", "ranged"],
+                attackMultiplier: 1.6,
+                description: "高威力の機械弓",
+                owned: false,
+                price: 400
             }
         };
 
@@ -139,18 +176,25 @@ class BattleRPG {
             slash: { name: "斬撃", icon: "🗡️", color: "#e74c3c" },
             blunt: { name: "打撃", icon: "🔨", color: "#f39c12" },
             pierce: { name: "突き", icon: "🗡️", color: "#9b59b6" },
-            holy: { name: "聖", icon: "✨", color: "#f1c40f" }
+            holy: { name: "聖", icon: "✨", color: "#f1c40f" },
+            ranged: { name: "遠距離", icon: "🎯", color: "#27ae60" }
         };
 
         this.skills = {
-            fire: { name: "ファイア", cost: 10, power: 1.8, effect: "🔥", description: "炎の魔法で敵を焼く", element: "fire", icon: "🔥" },
-            heal: { name: "ヒール", cost: 15, power: 0.8, effect: "💚", description: "HPを回復する", element: "holy", icon: "✨" },
-            thunder: { name: "サンダー", cost: 20, power: 2.2, effect: "⚡", description: "雷撃で大ダメージ", element: "lightning", icon: "⚡" },
-            critical: { name: "クリティカル", cost: 25, power: 3.0, effect: "💥", description: "必殺の一撃", element: "physical", icon: "💥" },
-            ice: { name: "アイス", cost: 12, power: 1.6, effect: "❄️", description: "氷の魔法で敵を凍らせる", element: "ice", icon: "❄️" },
-            shield: { name: "シールド", cost: 8, power: 0.5, effect: "🛡️", description: "防御力を一時的に上げる", element: "defensive", icon: "🛡️" },
-            drain: { name: "ドレイン", cost: 18, power: 1.4, effect: "🧛", description: "敵のHPを吸収する", element: "dark", icon: "🌙" },
-            bless: { name: "ブレス", cost: 22, power: 2.0, effect: "🙏", description: "聖なる力で敵を清める", element: "holy", icon: "✨" }
+            fire: { name: "ファイア", cost: 10, power: 1.8, effect: "🔥", description: "炎の魔法で敵を焼く", element: "fire", icon: "🔥", type: "magic" },
+            heal: { name: "ヒール", cost: 15, power: 0.8, effect: "💚", description: "HPを回復する", element: "holy", icon: "✨", type: "magic" },
+            thunder: { name: "サンダー", cost: 20, power: 2.2, effect: "⚡", description: "雷撃で大ダメージ", element: "lightning", icon: "⚡", type: "magic" },
+            critical: { name: "クリティカル", cost: 25, power: 3.0, effect: "💥", description: "必殺の一撃", element: "physical", icon: "💥", type: "physical" },
+            ice: { name: "アイス", cost: 12, power: 1.6, effect: "❄️", description: "氷の魔法で敵を凍らせる", element: "ice", icon: "❄️", type: "magic" },
+            shield: { name: "シールド", cost: 8, power: 0.5, effect: "🛡️", description: "防御力を一時的に上げる", element: "defensive", icon: "🛡️", type: "magic" },
+            drain: { name: "ドレイン", cost: 18, power: 1.4, effect: "🧛", description: "敵のHPを吸収する", element: "dark", icon: "🌙", type: "magic" },
+            bless: { name: "ブレス", cost: 22, power: 2.0, effect: "🙏", description: "聖なる力で敵を清める", element: "holy", icon: "✨", type: "magic" },
+            
+            // 連携スキル（物理+魔法）
+            flame_slash: { name: "火炎斬り", cost: 15, physicalPower: 1.2, magicalPower: 1.5, effect: "🔥⚔️", description: "炎を纏った斬撃", element: "fire", icon: "🔥⚔️", type: "combo", requiredPhysicalLevel: 2, requiredMagicalLevel: 2 },
+            ice_arrow: { name: "氷矢", cost: 18, physicalPower: 1.1, magicalPower: 1.8, effect: "❄️🏹", description: "氷の魔力を込めた矢", element: "ice", icon: "❄️🏹", type: "combo", requiredPhysicalLevel: 3, requiredMagicalLevel: 2, requiredWeaponType: "ranged" },
+            thunder_strike: { name: "雷鳴撃", cost: 22, physicalPower: 1.5, magicalPower: 2.0, effect: "⚡💥", description: "雷を纏った強打", element: "lightning", icon: "⚡💥", type: "combo", requiredPhysicalLevel: 3, requiredMagicalLevel: 3 },
+            holy_blade: { name: "聖剣術", cost: 25, physicalPower: 1.3, magicalPower: 2.2, effect: "✨⚔️", description: "聖なる力の剣技", element: "holy", icon: "✨⚔️", type: "combo", requiredPhysicalLevel: 4, requiredMagicalLevel: 3 }
         };
 
         this.items = {
@@ -163,6 +207,14 @@ class BattleRPG {
         this.isPlayerTurn = true;
         this.isBattleActive = false;
         this.comboTimer = null;
+        
+        // サウンドマネージャーを初期化
+        this.soundManager = window.soundManager || null;
+        if (this.soundManager) {
+            console.log('🎵 サウンドシステム有効');
+        } else {
+            console.warn('⚠️ サウンドシステムが読み込まれていません');
+        }
 
         this.init();
     }
@@ -312,7 +364,7 @@ class BattleRPG {
             return this.playerAttack();
         }
         
-        const weaponAttack = Math.floor(this.player.attack * weapon.attackMultiplier);
+        const weaponAttack = Math.floor(this.player.physicalAttack * weapon.attackMultiplier);
         
         // 傷口システムによる防御力減少を適用（弱点攻撃の場合）
         const appliedWounds = this.applyWoundSystem(weapon.types, null);
@@ -332,6 +384,22 @@ class BattleRPG {
         
         const isCritical = Math.random() < 0.15 + (this.player.combo * 0.05); // コンボでクリティカル率上昇
         const finalDamage = isCritical ? Math.floor(damage * 2) : damage;
+        
+        // サウンド再生
+        if (this.soundManager) {
+            if (isCritical) {
+                this.soundManager.playCriticalSound();
+            } else {
+                // 弓系武器は専用サウンド
+                if (weapon.types.includes('ranged')) {
+                    this.soundManager.playBowSound();
+                } else {
+                    this.soundManager.playAttackSound();
+                }
+            }
+            // コンボ音
+            this.soundManager.playComboSound(this.player.combo + 1);
+        }
 
         this.player.combo++;
         if (this.player.combo > this.player.maxCombo) {
@@ -357,6 +425,9 @@ class BattleRPG {
             this.logMessage(`${weapon.icon} ${weapon.name}(${attackTypeText})${weaknessText}で${finalDamage}ダメージ！${woundText}${defenseInfo}`);
         }
 
+        // 物理経験値獲得
+        this.gainPhysicalExp(1);
+        
         this.updateUI();
 
         if (this.enemy.hp <= 0) {
@@ -378,14 +449,49 @@ class BattleRPG {
         this.player.mp -= skill.cost;
         this.hideActionPanel();
 
+        // スキルサウンド再生
+        if (this.soundManager) {
+            this.soundManager.playSkillSound(skillName);
+        }
+        
         if (skillName === 'heal') {
             const healAmount = Math.floor(this.player.maxHp * skill.power * 0.5);
             this.player.hp = Math.min(this.player.maxHp, this.player.hp + healAmount);
             this.showDamageNumber(healAmount, 'player', false, true);
             this.showEffect(skill.effect, 'player');
             this.logMessage(`💚 ${skill.name}でHP ${healAmount}回復！`);
+            
+            // 魔法経験値獲得
+            this.gainMagicalExp(3);
+        } else if (skill.type === 'combo') {
+            // 連携スキル処理
+            const physicalDamage = Math.floor(this.player.physicalAttack * skill.physicalPower);
+            const magicalDamage = Math.floor(this.player.magicalAttack * skill.magicalPower);
+            const totalDamage = physicalDamage + magicalDamage;
+            
+            // 傷口システム適用
+            const appliedWounds = this.applyWoundSystem(null, skill.element);
+            const finalDamage = this.calculateMagicalDamage(totalDamage);
+            
+            this.player.combo += 3; // 連携スキルはコンボ大幅増加
+            if (this.player.combo > this.player.maxCombo) {
+                this.player.maxCombo = this.player.combo;
+            }
+
+            this.animateCharacter('player', 'attacking');
+            this.showDamageNumber(finalDamage, 'enemy', false);
+            this.showEffect(skill.effect, 'enemy');
+            
+            this.enemy.hp = Math.max(0, this.enemy.hp - finalDamage);
+
+            const woundText = appliedWounds.length > 0 ? `🩸(${appliedWounds.join('・')})` : '';
+            this.logMessage(`💫 ${skill.name}で${finalDamage}ダメージ！(物理:${physicalDamage} + 魔法:${magicalDamage})${woundText}(コンボ: ${this.player.combo})`);
+            
+            // 両方の経験値獲得
+            this.gainPhysicalExp(2);
+            this.gainMagicalExp(2);
         } else {
-            const baseDamage = Math.floor(this.player.attack * skill.power);
+            const baseDamage = Math.floor(this.player.magicalAttack * (skill.power || 1.0));
             
             // 傷口システムによる防御力減少を適用（属性弱点の場合）
             const appliedWounds = this.applyWoundSystem(null, skill.element);
@@ -428,6 +534,9 @@ class BattleRPG {
             const woundText = appliedWounds.length > 0 ? `🩸(${appliedWounds.join('・')})` : '';
             const defenseInfo = this.enemy ? `魔防:${this.enemy.currentMagicalDefense}` : '';
             this.logMessage(`✨ ${skill.name}で${finalDamage}ダメージ！${woundText}${defenseInfo}${critText}(コンボ: ${this.player.combo})`);
+            
+            // 魔法経験値獲得
+            this.gainMagicalExp(1);
         }
 
         this.updateUI();
@@ -462,11 +571,17 @@ class BattleRPG {
             this.showEffect('💙', 'player');
             this.logMessage(`💙 ${item.name}でMP ${item.power}回復！`);
         } else if (item.effect === 'damage') {
-            const damage = this.calculateDamage(item.power, this.enemy.defense);
+            // 爆弾は物理ダメージとして扱う
+            const damage = this.calculatePhysicalDamage(item.power);
             this.enemy.hp = Math.max(0, this.enemy.hp - damage);
             this.showDamageNumber(damage, 'enemy', false);
             this.showEffect('💣', 'enemy');
             this.logMessage(`💣 ${item.name}で${damage}ダメージ！`);
+            
+            // サウンド再生
+            if (this.soundManager) {
+                this.soundManager.playItemSound('bomb');
+            }
         }
 
         this.updateUI();
@@ -481,6 +596,11 @@ class BattleRPG {
     playerGuard() {
         if (!this.canPlayerAct()) return;
 
+        // ガードサウンド再生
+        if (this.soundManager) {
+            this.soundManager.playGuardSound();
+        }
+        
         this.player.isGuarding = true;
         this.animateCharacter('player', 'guarding');
         this.logMessage(`🛡️ ${this.player.name}は防御の構えを取った！`);
@@ -494,29 +614,52 @@ class BattleRPG {
     enemyTurn() {
         if (!this.isBattleActive) return;
 
-        setTimeout(() => {
+        setTimeout(() => { // 1500ms → 375ms（4倍速）
             const action = Math.random() < 0.8 ? 'attack' : 'special';
             
             if (action === 'attack') {
-                let damage = this.calculateDamage(this.enemy.attack, this.player.defense);
+                // 遠隔攻撃による回避判定
+                const currentWeapon = this.weapons[this.player.currentWeapon];
+                const isRangedWeapon = currentWeapon && currentWeapon.types.includes('ranged');
+                const dodgeChance = isRangedWeapon ? 0.3 : 0.05; // 弓は30%、その他は5%
                 
-                if (this.player.isGuarding) {
-                    damage = Math.floor(damage * 0.5);
-                    this.logMessage(`🛡️ 防御により${damage}ダメージに軽減！`);
+                if (Math.random() < dodgeChance) {
+                    this.showEffect('💨', 'player');
+                    this.logMessage(`💨 ${isRangedWeapon ? '遠距離攻撃で' : '素早く'}${this.enemy.name}の攻撃を回避！`);
+                    // サウンド再生
+                    if (this.soundManager) {
+                        this.soundManager.playUISound('hover'); // 回避音
+                    }
                 } else {
-                    // コンボリセット
-                    if (this.player.combo > 0) {
-                        this.logMessage(`💔 コンボが途切れた！(最大コンボ: ${this.player.combo})`);
-                        this.player.combo = 0;
+                    let damage = this.calculateDamage(this.enemy.attack, this.player.defense);
+                    
+                    if (this.player.isGuarding) {
+                        damage = Math.floor(damage * 0.5);
+                        this.logMessage(`🛡️ 防御により${damage}ダメージに軽減！`);
+                        // サウンド再生
+                        if (this.soundManager) {
+                            this.soundManager.playGuardSound();
+                        }
+                    } else {
+                        // コンボリセット
+                        if (this.player.combo > 0) {
+                            this.logMessage(`💔 コンボが途切れた！(最大コンボ: ${this.player.combo})`);
+                            this.player.combo = 0;
+                        }
+                    }
+
+                    this.animateCharacter('enemy', 'attacking');
+                    this.showDamageNumber(damage, 'player', false);
+                    this.showEffect('💢', 'player');
+
+                    this.player.hp = Math.max(0, this.player.hp - damage);
+                    this.logMessage(`👹 ${this.enemy.name}の攻撃で${damage}ダメージ！`);
+                    
+                    // サウンド再生
+                    if (this.soundManager) {
+                        this.soundManager.playDamageSound(false);
                     }
                 }
-
-                this.animateCharacter('enemy', 'attacking');
-                this.showDamageNumber(damage, 'player', false);
-                this.showEffect('💢', 'player');
-
-                this.player.hp = Math.max(0, this.player.hp - damage);
-                this.logMessage(`👹 ${this.enemy.name}の攻撃で${damage}ダメージ！`);
             } else {
                 // 敵の特殊攻撃
                 const specialDamage = Math.floor(this.enemy.attack * 1.5);
@@ -545,7 +688,43 @@ class BattleRPG {
                 this.isPlayerTurn = true;
                 this.enablePlayerActions();
             }
-        }, 1500);
+        }, 375); // 1500ms → 375ms（4倍速）
+    }
+
+    // 物理経験値獲得
+    gainPhysicalExp(amount) {
+        this.player.physicalExp += amount;
+        
+        if (this.player.physicalExp >= this.player.physicalExpToNext) {
+            this.player.physicalLevel++;
+            this.player.physicalAttack += 3;
+            this.player.physicalExp -= this.player.physicalExpToNext;
+            this.player.physicalExpToNext = Math.floor(this.player.physicalExpToNext * 1.2);
+            
+            this.logMessage(`⚡ 物理レベルアップ！ Lv.${this.player.physicalLevel} (攻撃力+3)`);
+            if (this.soundManager) {
+                this.soundManager.playLevelUpSound();
+            }
+        }
+    }
+
+    // 魔法経験値獲得
+    gainMagicalExp(amount) {
+        this.player.magicalExp += amount;
+        
+        if (this.player.magicalExp >= this.player.magicalExpToNext) {
+            this.player.magicalLevel++;
+            this.player.magicalAttack += 2;
+            this.player.maxMp += 5;
+            this.player.mp += 5;
+            this.player.magicalExp -= this.player.magicalExpToNext;
+            this.player.magicalExpToNext = Math.floor(this.player.magicalExpToNext * 1.15);
+            
+            this.logMessage(`🔮 魔法レベルアップ！ Lv.${this.player.magicalLevel} (魔攻+2, MP+5)`);
+            if (this.soundManager) {
+                this.soundManager.playLevelUpSound();
+            }
+        }
     }
 
     calculateDamage(attack, defense) {
@@ -881,7 +1060,7 @@ class BattleRPG {
         this.disablePlayerActions();
         setTimeout(() => {
             this.enemyTurn();
-        }, 400);
+        }, 200); // 400ms → 200ms（半分に短縮）
     }
 
     updateUI() {
@@ -990,20 +1169,39 @@ class BattleRPG {
     getAvailableSkills() {
         const playerLevel = this.gameState.level;
         const allSkills = Object.entries(this.skills);
+        const currentWeapon = this.weapons[this.player.currentWeapon];
         
-        // レベルに応じてスキルを解放
+        // レベルと条件に応じてスキルを解放
         return allSkills.filter(([skillKey, skill]) => {
+            // 連携スキルの条件チェック
+            if (skill.type === 'combo') {
+                // レベル条件チェック
+                if (skill.requiredPhysicalLevel && this.player.physicalLevel < skill.requiredPhysicalLevel) {
+                    return false;
+                }
+                if (skill.requiredMagicalLevel && this.player.magicalLevel < skill.requiredMagicalLevel) {
+                    return false;
+                }
+                // 武器タイプ条件チェック（氷矢は弓必須）
+                if (skill.requiredWeaponType) {
+                    return currentWeapon && currentWeapon.types.includes(skill.requiredWeaponType);
+                }
+                return true;
+            }
+            
+            // 基本スキルの条件
             switch(skillKey) {
                 case 'fire':
                 case 'heal':
-                case 'thunder':  // 初期から利用可能に変更
-                case 'critical': // 初期から利用可能に変更
                     return true;
+                case 'thunder':
+                case 'critical':
+                    return playerLevel >= 2;
                 case 'ice':
                 case 'shield':
-                    return playerLevel >= 2;
-                case 'drain':
                     return playerLevel >= 3;
+                case 'drain':
+                    return playerLevel >= 4;
                 case 'bless':
                     return playerLevel >= 5;
                 default:
@@ -1249,7 +1447,7 @@ class BattleRPG {
                     currentScreen: currentScreen
                 },
                 saveTime: new Date().toISOString(),
-                version: "0.50"
+                version: "0.51"
             };
 
             localStorage.setItem('epicBattleRPG_save', JSON.stringify(saveData));
