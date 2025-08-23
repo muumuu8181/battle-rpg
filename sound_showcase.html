@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎵 Battle RPG サウンドショーケース</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            padding: 20px;
+            margin: 0;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            text-align: center;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            margin-bottom: 30px;
+        }
+        
+        .category {
+            background: rgba(0,0,0,0.3);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 30px;
+            border: 2px solid rgba(255,255,255,0.1);
+        }
+        
+        .category h2 {
+            color: #4CAF50;
+            border-bottom: 2px solid #4CAF50;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .sound-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+        }
+        
+        .sound-button {
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            border: none;
+            border-radius: 10px;
+            padding: 15px 20px;
+            color: white;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        
+        .sound-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+            background: linear-gradient(135deg, #45a049 0%, #4CAF50 100%);
+        }
+        
+        .sound-button:active {
+            transform: translateY(0);
+        }
+        
+        .battle-sounds { border-left: 5px solid #e74c3c; }
+        .skill-sounds { border-left: 5px solid #9b59b6; }
+        .game-sounds { border-left: 5px solid #f39c12; }
+        .item-sounds { border-left: 5px solid #3498db; }
+        .ui-sounds { border-left: 5px solid #2ecc71; }
+        .system-sounds { border-left: 5px solid #e67e22; }
+        
+        .status {
+            text-align: center;
+            padding: 15px;
+            background: rgba(0,0,0,0.5);
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .playing {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%) !important;
+        }
+        
+        .combo-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .combo-input {
+            padding: 8px 12px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            width: 80px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎵 Battle RPG サウンドショーケース</h1>
+        
+        <div class="status" id="status">
+            初期化待ち... 画面をクリックして音声システムを開始してください
+        </div>
+        
+        <!-- 戦闘音 -->
+        <div class="category battle-sounds">
+            <h2>🗡️ 戦闘音 (4種類)</h2>
+            <div class="sound-grid">
+                <button class="sound-button" onclick="playSound('attack')">
+                    ⚔️ 基本攻撃音
+                </button>
+                <button class="sound-button" onclick="playSound('critical')">
+                    💥 クリティカル攻撃音
+                </button>
+                <button class="sound-button" onclick="playSound('damage-normal')">
+                    🩸 通常ダメージ音
+                </button>
+                <button class="sound-button" onclick="playSound('damage-critical')">
+                    💀 クリティカルダメージ音
+                </button>
+                <button class="sound-button" onclick="playSound('guard')">
+                    🛡️ ガード音
+                </button>
+            </div>
+        </div>
+        
+        <!-- スキル音 -->
+        <div class="category skill-sounds">
+            <h2>✨ スキル音 (8種類)</h2>
+            <div class="sound-grid">
+                <button class="sound-button" onclick="playSkill('fire')">
+                    🔥 ファイア
+                </button>
+                <button class="sound-button" onclick="playSkill('thunder')">
+                    ⚡ サンダー
+                </button>
+                <button class="sound-button" onclick="playSkill('ice')">
+                    ❄️ アイス
+                </button>
+                <button class="sound-button" onclick="playSkill('heal')">
+                    💚 ヒール
+                </button>
+                <button class="sound-button" onclick="playSkill('shield')">
+                    🛡️ シールド
+                </button>
+                <button class="sound-button" onclick="playSkill('drain')">
+                    🧛 ドレイン
+                </button>
+                <button class="sound-button" onclick="playSkill('bless')">
+                    🙏 ブレス
+                </button>
+                <button class="sound-button" onclick="playSkill('critical')">
+                    💥 必殺技
+                </button>
+            </div>
+        </div>
+        
+        <!-- ゲーム状態音 -->
+        <div class="category game-sounds">
+            <h2>🎉 ゲーム状態音 (3種類)</h2>
+            <div class="sound-grid">
+                <button class="sound-button" onclick="playSound('victory')">
+                    🏆 勝利音 (ファンファーレ)
+                </button>
+                <button class="sound-button" onclick="playSound('defeat')">
+                    💀 敗北音 (下降音階)
+                </button>
+                <button class="sound-button" onclick="playSound('levelup')">
+                    ⭐ レベルアップ音
+                </button>
+            </div>
+        </div>
+        
+        <!-- アイテム音 -->
+        <div class="category item-sounds">
+            <h2>🧪 アイテム音 (3種類)</h2>
+            <div class="sound-grid">
+                <button class="sound-button" onclick="playItem('potion')">
+                    🧪 ポーション (ゴクゴク)
+                </button>
+                <button class="sound-button" onclick="playItem('mana')">
+                    💙 マナポーション (キラキラ)
+                </button>
+                <button class="sound-button" onclick="playItem('bomb')">
+                    💣 爆弾 (ドカーン)
+                </button>
+            </div>
+        </div>
+        
+        <!-- UI音 -->
+        <div class="category ui-sounds">
+            <h2>🖱️ UI音 (3種類)</h2>
+            <div class="sound-grid">
+                <button class="sound-button" onclick="playUI('click')">
+                    🖱️ クリック音
+                </button>
+                <button class="sound-button" onclick="playUI('hover')">
+                    👆 ホバー音
+                </button>
+                <button class="sound-button" onclick="playUI('error')">
+                    ❌ エラー音
+                </button>
+            </div>
+        </div>
+        
+        <!-- システム音 -->
+        <div class="category system-sounds">
+            <h2>🔥 システム音 (1種類)</h2>
+            <div class="sound-grid">
+                <div class="combo-controls">
+                    <label>コンボ数:</label>
+                    <input type="number" id="comboInput" class="combo-input" value="1" min="1" max="20">
+                    <button class="sound-button" onclick="playCombo()">
+                        🔥 コンボ音再生
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="sound_fixed.js"></script>
+    <script>
+        let isReady = false;
+        
+        function updateStatus(message) {
+            document.getElementById('status').textContent = message;
+        }
+        
+        function flashButton(button) {
+            button.classList.add('playing');
+            setTimeout(() => {
+                button.classList.remove('playing');
+            }, 300);
+        }
+        
+        async function ensureReady() {
+            if (!isReady && window.soundManager) {
+                await window.soundManager.ensureReady();
+                isReady = true;
+                updateStatus('🎵 音声システム準備完了！全ての音をお楽しみください');
+            }
+        }
+        
+        async function playSound(type) {
+            await ensureReady();
+            if (!window.soundManager) {
+                updateStatus('❌ soundManagerが見つかりません');
+                return;
+            }
+            
+            const button = event.target;
+            flashButton(button);
+            
+            switch(type) {
+                case 'attack':
+                    window.soundManager.playAttackSound();
+                    break;
+                case 'critical':
+                    window.soundManager.playCriticalSound();
+                    break;
+                case 'damage-normal':
+                    window.soundManager.playDamageSound(false);
+                    break;
+                case 'damage-critical':
+                    window.soundManager.playDamageSound(true);
+                    break;
+                case 'guard':
+                    window.soundManager.playGuardSound();
+                    break;
+                case 'victory':
+                    window.soundManager.playVictorySound();
+                    break;
+                case 'defeat':
+                    window.soundManager.playDefeatSound();
+                    break;
+                case 'levelup':
+                    window.soundManager.playLevelUpSound();
+                    break;
+            }
+        }
+        
+        async function playSkill(skillType) {
+            await ensureReady();
+            if (!window.soundManager) return;
+            
+            const button = event.target;
+            flashButton(button);
+            window.soundManager.playSkillSound(skillType);
+        }
+        
+        async function playItem(itemType) {
+            await ensureReady();
+            if (!window.soundManager) return;
+            
+            const button = event.target;
+            flashButton(button);
+            window.soundManager.playItemSound(itemType);
+        }
+        
+        async function playUI(uiType) {
+            await ensureReady();
+            if (!window.soundManager) return;
+            
+            const button = event.target;
+            flashButton(button);
+            window.soundManager.playUISound(uiType);
+        }
+        
+        async function playCombo() {
+            await ensureReady();
+            if (!window.soundManager) return;
+            
+            const comboCount = parseInt(document.getElementById('comboInput').value) || 1;
+            const button = event.target;
+            flashButton(button);
+            window.soundManager.playComboSound(comboCount);
+            
+            updateStatus(`🔥 コンボ音再生 (${comboCount}コンボ)`);
+        }
+        
+        // 初期化
+        document.addEventListener('click', async () => {
+            if (!isReady) {
+                updateStatus('🎵 音声システム初期化中...');
+                await ensureReady();
+            }
+        }, { once: true });
+        
+        // 初期状態
+        setTimeout(() => {
+            if (window.soundManager) {
+                updateStatus('🎵 準備完了！ボタンをクリックして音声を開始してください');
+            } else {
+                updateStatus('❌ soundManagerが読み込まれていません');
+            }
+        }, 500);
+    </script>
+</body>
+</html>

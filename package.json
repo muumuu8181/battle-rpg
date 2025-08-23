@@ -9,7 +9,12 @@
     "test:ui": "playwright test --ui",
     "test:debug": "playwright test --debug",
     "serve": "python3 -m http.server 8080",
-    "install-deps": "npm install && npx playwright install"
+    "install-deps": "npm install && npx playwright install",
+    "syntax-check": "node -c script.js && node -c effects.js && node -c sound_fixed.js",
+    "lint": "eslint script.js effects.js sound_fixed.js",
+    "check": "npm run syntax-check && npm run lint",
+    "wait-actions": "python3 wait_for_actions.py",
+    "wait-actions-bash": "./wait-for-actions.sh"
   },
   "keywords": ["rpg", "game", "html5", "battle", "javascript", "爽快"],
   "author": "Claude Code Force",

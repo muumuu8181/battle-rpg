@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>🔍 サウンド干渉デバッグ</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; background: #222; color: white; }
+        button { padding: 15px 30px; margin: 5px; border: none; border-radius: 5px; background: #4CAF50; color: white; cursor: pointer; }
+        .log { background: #333; padding: 10px; margin: 10px 0; border-radius: 4px; max-height: 300px; overflow-y: auto; }
+        .error { background: #d32f2f; }
+        .success { background: #2e7d32; }
+    </style>
+</head>
+<body>
+    <h1>🔍 サウンド干渉デバッグテスト</h1>
+    
+    <div>
+        <button onclick="testBasicSound()">🎵 基本音テスト</button>
+        <button onclick="testAfterGameLoad()">🎮 ゲームスクリプト後テスト</button>
+        <button onclick="testSoundManager()">🔧 soundManagerテスト</button>
+        <button onclick="clearLog()">🧹 ログクリア</button>
+    </div>
+    
+    <div id="log" class="log"></div>
+
+    <script>
+        function log(message, type = 'info') {
+            const logDiv = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            const className = type === 'error' ? 'error' : type === 'success' ? 'success' : '';
+            logDiv.innerHTML += `<div class="${className}">[${timestamp}] ${message}</div>`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+            console.log(message);
+        }
+        
+        function clearLog() {
+            document.getElementById('log').innerHTML = '';
+        }
+        
+        // 基本的な音テスト
+        async function testBasicSound() {
+            log('🎵 基本音テスト開始...');
+            try {
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                log(`✅ AudioContext作成成功 (状態: ${audioContext.state})`);
+                
+                if (audioContext.state === 'suspended') {
+                    await audioContext.resume();
+                    log(`✅ AudioContext再開完了 (状態: ${audioContext.state})`);
+                }
+                
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.frequency.setValueAtTime(440, audioContext.currentTime);
+                oscillator.type = 'sine';
+                
+                gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                gainNode.gain.linearRampToValueAtTime(0, audioContext.currentTime + 0.3);
+                
+                oscillator.start();
+                oscillator.stop(audioContext.currentTime + 0.3);
+                
+                log('✅ 基本音再生完了', 'success');
+                
+            } catch (error) {
+                log(`❌ 基本音テスト失敗: ${error.message}`, 'error');
+            }
+        }
+        
+        // ゲームスクリプトを読み込んでからテスト
+        async function testAfterGameLoad() {
+            log('🎮 ゲームスクリプト読み込み後テスト開始...');
+            
+            try {
+                // sound.jsを動的読み込み
+                if (!window.SoundManager) {
+                    const soundScript = document.createElement('script');
+                    soundScript.src = 'sound.js';
+                    document.head.appendChild(soundScript);
+                    
+                    await new Promise((resolve, reject) => {
+                        soundScript.onload = resolve;
+                        soundScript.onerror = reject;
+                    });
+                }
+                
+                log('✅ sound.js読み込み完了');
+                
+                // soundManagerの確認
+                if (window.soundManager) {
+                    log(`✅ window.soundManager存在確認`);
+                    log(`📊 soundManager状態: enabled=${window.soundManager.isEnabled}, context=${!!window.soundManager.audioContext}`);
+                    
+                    if (window.soundManager.audioContext) {
+                        log(`📊 AudioContext状態: ${window.soundManager.audioContext.state}`);
+                    }
+                    
+                    // soundManagerで音再生テスト
+                    log('🎵 soundManagerで音再生テスト...');
+                    window.soundManager.playAttackSound();
+                    log('✅ soundManager音再生実行', 'success');
+                    
+                } else {
+                    log('❌ window.soundManagerが存在しません', 'error');
+                }
+                
+            } catch (error) {
+                log(`❌ ゲームスクリプト後テスト失敗: ${error.message}`, 'error');
+            }
+        }
+        
+        // soundManagerの詳細テスト
+        async function testSoundManager() {
+            log('🔧 soundManagerの詳細テスト開始...');
+            
+            if (!window.soundManager) {
+                log('❌ soundManagerが存在しません', 'error');
+                return;
+            }
+            
+            const sm = window.soundManager;
+            log(`📊 isEnabled: ${sm.isEnabled}`);
+            log(`📊 audioContext: ${!!sm.audioContext}`);
+            log(`📊 debugMode: ${sm.debugMode}`);
+            
+            if (sm.audioContext) {
+                log(`📊 AudioContext.state: ${sm.audioContext.state}`);
+                log(`📊 AudioContext.sampleRate: ${sm.audioContext.sampleRate}`);
+                
+                // 複数のAudioContextインスタンスがないかチェック
+                const audioContexts = [];
+                if (window.AudioContext) audioContexts.push('AudioContext');
+                if (window.webkitAudioContext) audioContexts.push('webkitAudioContext');
+                log(`📊 利用可能なAudioContext: ${audioContexts.join(', ')}`);
+                
+                // 直接createToneを呼び出してみる
+                try {
+                    log('🎵 soundManager.createTone直接呼び出し...');
+                    sm.createTone(523, 0.3, 'sine', 0.3); // C5音
+                    log('✅ createTone実行成功', 'success');
+                } catch (error) {
+                    log(`❌ createTone失敗: ${error.message}`, 'error');
+                }
+            }
+        }
+        
+        // 初期化
+        document.addEventListener('click', () => {
+            log('👆 ユーザー操作検知 - 音声システム準備完了');
+        }, { once: true });
+        
+        log('🔍 デバッグページ準備完了 - ボタンをクリックしてテスト開始');
+    </script>
+</body>
+</html>

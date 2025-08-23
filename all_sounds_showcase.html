@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎵 Web Audio API 全サウンドライブラリ</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            margin: 0;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            text-align: center;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            margin-bottom: 10px;
+        }
+        
+        .subtitle {
+            text-align: center;
+            opacity: 0.8;
+            margin-bottom: 30px;
+        }
+        
+        .category {
+            background: rgba(0,0,0,0.3);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+            border-left: 5px solid;
+        }
+        
+        .category h2 {
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid rgba(255,255,255,0.2);
+        }
+        
+        .sound-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 15px;
+        }
+        
+        .sound-button {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            border: none;
+            border-radius: 12px;
+            padding: 15px 20px;
+            color: white;
+            font-size: 15px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            min-height: 50px;
+        }
+        
+        .sound-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+        }
+        
+        .sound-button:active, .playing {
+            transform: translateY(0);
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%) !important;
+        }
+        
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .slider {
+            width: 120px;
+            height: 6px;
+            border-radius: 3px;
+            background: rgba(255,255,255,0.3);
+            outline: none;
+            -webkit-appearance: none;
+        }
+        
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #4facfe;
+            cursor: pointer;
+        }
+        
+        .input-small {
+            width: 80px;
+            padding: 5px 8px;
+            border: none;
+            border-radius: 5px;
+            text-align: center;
+            font-size: 14px;
+        }
+        
+        .status {
+            text-align: center;
+            padding: 15px;
+            background: rgba(0,0,0,0.5);
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        
+        /* カテゴリ色分け */
+        .basic { border-left-color: #e74c3c; }
+        .musical { border-left-color: #9b59b6; }
+        .nature { border-left-color: #2ecc71; }
+        .electronic { border-left-color: #3498db; }
+        .percussive { border-left-color: #f39c12; }
+        .ambient { border-left-color: #1abc9c; }
+        .voice { border-left-color: #e67e22; }
+        .special { border-left-color: #34495e; }
+        
+        .description {
+            font-size: 12px;
+            opacity: 0.7;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎵 Web Audio API 全サウンドライブラリ</h1>
+        <p class="subtitle">Web Audio APIで作れる全種類のサウンドエフェクト集</p>
+        
+        <div class="status" id="status">
+            クリックして音声システムを開始してください
+        </div>
+        
+        <!-- 基本波形 -->
+        <div class="category basic">
+            <h2>🎛️ 基本波形 (4種類)</h2>
+            <div class="sound-grid">
+                <button class="sound-button" onclick="playWaveform('sine')">
+                    🌊 サイン波 <span class="description">純粋で滑らかな音</span>
+                </button>
+                <button class="sound-button" onclick="playWaveform('square')">
+                    ⬜ 矩形波 <span class="description">8ビットゲーム風</span>
+                </button>
+                <button class="sound-button" onclick="playWaveform('sawtooth')">
+                    🦷 ノコギリ波 <span class="description">ブザー・警告音</span>
+                </button>
+                <button class="sound-button" onclick="playWaveform('triangle')">
+                    📐 三角波 <span class="description">柔らかい音</span>
+                </button>
+            </div>
+        </div>
+        
+        <!-- 楽器音 -->
+        <div class="category musical">
+            <h2>🎼 楽器・音楽系 (15種類)</h2>
+            <div class="sound-grid">
+                <button class="sound-button" onclick="playInstrument('piano')">
+                    🎹 ピアノ <span class="description">C-E-G和音</span>
+                </button>
+                <button class="sound-button" onclick="playInstrument('guitar')">
+                    🎸 ギター <span class="description">アルペジオ</span>
+                </button>
+                <button class="sound-button" onclick="playInstrument('violin')">
+                    🎻 バイオリン <span class="description">高音旋律</span>
+                </button>
+                <button class="sound-button" onclick="playInstrument('flute')">
+                    🪈 フルート <span class="description">軽やかな旋律</span>
+                </button>
+                <button class="sound-button" onclick="playInstrument('trumpet')">
+                    🎺 トランペット <span class="description">ファンファーレ</span>
+                </button>
+                <button class="sound-button" onclick="playInstrument('organ')">
+                    🎹 オルガン <span class="description">教会風和音</span>
+                </button>
+                <button class="sound-button" onclick="playInstrument('bells')">
+                    🔔 ベル <span class="description">チャイム音</span>
+                </button>
+                <button class="sound-button" onclick="playInstrument('harp')">
+                    🪩 ハープ <span class="description">グリッサンド</span>
+                </button>
+                <button class="sound-button" onclick="playInstrument('xylophone')">
+                    🎵 シロフォン <span class="description">木琴音</span>
+                </button>
+                <button class="sound-button" onclick="playInstrument('accordion')">
+                    🪗 アコーディオン <span class="description">民族音楽風</span>
+                </button>
+                <button class="sound-button" onclick="playInstrument('bass')">
+                    🎸 ベース <span class="description">低音リズム</span>
+                </button>
+                <button class="sound-button" onclick="playInstrument('saxophone')">
+                    🎷 サックス <span class="description">ジャズ風</span>
+                </button>
+                <button class="sound-button" onclick="playInstrument('harmonica')">
+                    🎤 ハーモニカ <span class="description">ブルース風</span>
+                </button>
+                <button class="sound-button" onclick="playInstrument('music_box')">
+                    🎵 オルゴール <span class="description">子守唄</span>
+                </button>
+                <button class="sound-button" onclick="playInstrument('bagpipe')">
+                    🏴󠁧󠁢󠁳󠁣󠁴󠁿 バグパイプ <span class="description">スコットランド風</span>
+                </button>
+            </div>
+        </div>
+        
+        <!-- 自然音 -->
+        <div class="category nature">
+            <h2>🌿 自然・環境音 (12種類)</h2>
+            <div class="sound-grid">
+                <button class="sound-button" onclick="playNature('rain')">
+                    🌧️ 雨音 <span class="description">ホワイトノイズ</span>
+                </button>
+                <button class="sound-button" onclick="playNature('thunder')">
+                    ⚡ 雷音 <span class="description">低音爆発</span>
+                </button>
+                <button class="sound-button" onclick="playNature('wind')">
+                    💨 風音 <span class="description">フィルター変調</span>
+                </button>
+                <button class="sound-button" onclick="playNature('ocean')">
+                    🌊 波音 <span class="description">周期的ノイズ</span>
+                </button>
+                <button class="sound-button" onclick="playNature('fire')">
+                    🔥 炎音 <span class="description">パチパチ音</span>
+                </button>
+                <button class="sound-button" onclick="playNature('birds')">
+                    🐦 鳥の鳴き声 <span class="description">高音変調</span>
+                </button>
+                <button class="sound-button" onclick="playNature('forest')">
+                    🌲 森の音 <span class="description">複合環境音</span>
+                </button>
+                <button class="sound-button" onclick="playNature('stream')">
+                    🏞️ 小川 <span class="description">水流音</span>
+                </button>
+                <button class="sound-button" onclick="playNature('insects')">
+                    🦗 虫の声 <span class="description">高周波変調</span>
+                </button>
+                <button class="sound-button" onclick="playNature('leaves')">
+                    🍃 葉音 <span class="description">さらさら音</span>
+                </button>
+                <button class="sound-button" onclick="playNature('cave')">
+                    🕳️ 洞窟音 <span class="description">エコー効果</span>
+                </button>
+                <button class="sound-button" onclick="playNature('snow')">
+                    ❄️ 雪音 <span class="description">静寂なノイズ</span>
+                </button>
+            </div>
+        </div>
+        
+        <!-- 電子音・SF -->
+        <div class="category electronic">
+            <h2>🤖 電子音・SF系 (18種類)</h2>
+            <div class="sound-grid">
+                <button class="sound-button" onclick="playElectronic('laser')">
+                    🔫 レーザー <span class="description">上昇スイープ</span>
+                </button>
+                <button class="sound-button" onclick="playElectronic('explosion')">
+                    💥 爆発 <span class="description">低音爆発</span>
+                </button>
+                <button class="sound-button" onclick="playElectronic('teleport')">
+                    ✨ テレポート <span class="description">周波数変調</span>
+                </button>
+                <button class="sound-button" onclick="playElectronic('robot')">
+                    🤖 ロボット <span class="description">機械的変調</span>
+                </button>
+                <button class="sound-button" onclick="playElectronic('spaceship')">
+                    🚀 宇宙船 <span class="description">低音うなり</span>
+                </button>
+                <button class="sound-button" onclick="playElectronic('radar')">
+                    📡 レーダー <span class="description">パルス音</span>
+                </button>
+                <button class="sound-button" onclick="playElectronic('computer')">
+                    💻 コンピュータ <span class="description">ビープ音</span>
+                </button>
+                <button class="sound-button" onclick="playElectronic('alarm')">
+                    🚨 アラーム <span class="description">警告音</span>
+                </button>
+                <button class="sound-button" onclick="playElectronic('scanner')">
+                    📷 スキャナー <span class="description">高音スイープ</span>
+                </button>
+                <button class="sound-button" onclick="playElectronic('force_field')">
+                    🛡️ フォースフィールド <span class="description">エネルギー音</span>
+                </button>
+                <button class="sound-button" onclick="playElectronic('warp')">
+                    🌌 ワープ <span class="description">歪み効果</span>
+                </button>
+                <button class="sound-button" onclick="playElectronic('charging')">
+                    🔋 チャージ <span class="description">上昇音</span>
+                </button>
+                <button class="sound-button" onclick="playElectronic('discharge')">
+                    ⚡ 放電 <span class="description">電気音</span>
+                </button>
+                <button class="sound-button" onclick="playElectronic('glitch')">
+                    📺 グリッチ <span class="description">ノイズ効果</span>
+                </button>
+                <button class="sound-button" onclick="playElectronic('synthetic')">
+                    🎛️ シンセ <span class="description">電子音楽</span>
+                </button>
+                <button class="sound-button" onclick="playElectronic('digital')">
+                    💾 デジタル <span class="description">8ビット風</span>
+                </button>
+                <button class="sound-button" onclick="playElectronic('hologram')">
+                    🔮 ホログラム <span class="description">未来的</span>
+                </button>
+                <button class="sound-button" onclick="playElectronic('portal')">
+                    🌀 ポータル <span class="description">次元音</span>
+                </button>
+            </div>
+        </div>
+        
+        <!-- パーカッション -->
+        <div class="category percussive">
+            <h2>🥁 パーカッション・リズム (10種類)</h2>
+            <div class="sound-grid">
+                <button class="sound-button" onclick="playPercussion('kick')">
+                    🥾 キック <span class="description">低音ドラム</span>
+                </button>
+                <button class="sound-button" onclick="playPercussion('snare')">
+                    🥁 スネア <span class="description">中音ドラム</span>
+                </button>
+                <button class="sound-button" onclick="playPercussion('hihat')">
+                    🎵 ハイハット <span class="description">高音リズム</span>
+                </button>
+                <button class="sound-button" onclick="playPercussion('cymbal')">
+                    🥽 シンバル <span class="description">金属音</span>
+                </button>
+                <button class="sound-button" onclick="playPercussion('tom')">
+                    🪘 タム <span class="description">中低音</span>
+                </button>
+                <button class="sound-button" onclick="playPercussion('clap')">
+                    👏 拍手 <span class="description">パチパチ</span>
+                </button>
+                <button class="sound-button" onclick="playPercussion('woodblock')">
+                    🪵 ウッドブロック <span class="description">木の音</span>
+                </button>
+                <button class="sound-button" onclick="playPercussion('shaker')">
+                    🎵 シェイカー <span class="description">シャカシャカ</span>
+                </button>
+                <button class="sound-button" onclick="playPercussion('tambourine')">
+                    🪘 タンバリン <span class="description">ジャラジャラ</span>
+                </button>
+                <button class="sound-button" onclick="playPercussion('beat')">
+                    🎵 ビート <span class="description">リズムパターン</span>
+                </button>
+            </div>
+        </div>
+        
+        <!-- アンビエント -->
+        <div class="category ambient">
+            <h2>🌌 アンビエント・空間系 (8種類)</h2>
+            <div class="sound-grid">
+                <button class="sound-button" onclick="playAmbient('pad')">
+                    🌊 パッド <span class="description">広がりのある音</span>
+                </button>
+                <button class="sound-button" onclick="playAmbient('drone')">
+                    🎭 ドローン <span class="description">持続音</span>
+                </button>
+                <button class="sound-button" onclick="playAmbient('ethereal')">
+                    ✨ エーテル <span class="description">幻想的</span>
+                </button>
+                <button class="sound-button" onclick="playAmbient('meditation')">
+                    🧘 瞑想 <span class="description">心地よい音</span>
+                </button>
+                <button class="sound-button" onclick="playAmbient('space')">
+                    🌌 宇宙 <span class="description">無重力感</span>
+                </button>
+                <button class="sound-button" onclick="playAmbient('crystal')">
+                    💎 クリスタル <span class="description">透明感のある音</span>
+                </button>
+                <button class="sound-button" onclick="playAmbient('floating')">
+                    🎈 浮遊 <span class="description">浮遊感</span>
+                </button>
+                <button class="sound-button" onclick="playAmbient('atmosphere')">
+                    🌫️ アトモスフィア <span class="description">雰囲気音</span>
+                </button>
+            </div>
+        </div>
+        
+        <!-- 人声・動物 -->
+        <div class="category voice">
+            <h2>🗣️ 人声・動物系 (6種類)</h2>
+            <div class="sound-grid">
+                <button class="sound-button" onclick="playVoice('choir')">
+                    👥 合唱 <span class="description">和音ボイス</span>
+                </button>
+                <button class="sound-button" onclick="playVoice('whistle')">
+                    😗 口笛 <span class="description">メロディ</span>
+                </button>
+                <button class="sound-button" onclick="playVoice('hum')">
+                    😌 ハミング <span class="description">鼻歌風</span>
+                </button>
+                <button class="sound-button" onclick="playVoice('cat')">
+                    🐱 猫 <span class="description">ニャー音</span>
+                </button>
+                <button class="sound-button" onclick="playVoice('dog')">
+                    🐶 犬 <span class="description">ワン音</span>
+                </button>
+                <button class="sound-button" onclick="playVoice('whale')">
+                    🐋 クジラ <span class="description">低音うなり</span>
+                </button>
+            </div>
+        </div>
+        
+        <!-- 特殊効果 -->
+        <div class="category special">
+            <h2>🎪 特殊効果・実験的 (12種類)</h2>
+            <div class="sound-grid">
+                <div class="control-group">
+                    <label>周波数:</label>
+                    <input type="range" id="freqSlider" class="slider" min="20" max="2000" value="440">
+                    <span id="freqValue">440Hz</span>
+                    <button class="sound-button" onclick="playCustomFreq()">
+                        🎛️ カスタム周波数
+                    </button>
+                </div>
+                <button class="sound-button" onclick="playSpecial('sweep')">
+                    🌈 スイープ <span class="description">周波数変化</span>
+                </button>
+                <button class="sound-button" onclick="playSpecial('wobble')">
+                    〰️ ワブル <span class="description">揺れる音</span>
+                </button>
+                <button class="sound-button" onclick="playSpecial('tremolo')">
+                    📳 トレモロ <span class="description">震え効果</span>
+                </button>
+                <button class="sound-button" onclick="playSpecial('vibrato')">
+                    🎵 ビブラート <span class="description">音程の揺れ</span>
+                </button>
+                <button class="sound-button" onclick="playSpecial('phaser')">
+                    🌀 フェイザー <span class="description">位相変調</span>
+                </button>
+                <button class="sound-button" onclick="playSpecial('chorus')">
+                    🎭 コーラス <span class="description">多重効果</span>
+                </button>
+                <button class="sound-button" onclick="playSpecial('delay')">
+                    ⏱️ ディレイ <span class="description">エコー効果</span>
+                </button>
+                <button class="sound-button" onclick="playSpecial('reverb')">
+                    🏛️ リバーブ <span class="description">残響効果</span>
+                </button>
+                <button class="sound-button" onclick="playSpecial('distortion')">
+                    📢 ディストーション <span class="description">歪み効果</span>
+                </button>
+                <button class="sound-button" onclick="playSpecial('filter')">
+                    🔍 フィルター <span class="description">音質変化</span>
+                </button>
+                <button class="sound-button" onclick="playSpecial('granular')">
+                    🔬 グラニュラー <span class="description">粒子化音</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let audioContext = null;
+        let isReady = false;
+        
+        // 初期化
+        async function init() {
+            if (!isReady) {
+                try {
+                    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    if (audioContext.state === 'suspended') {
+                        await audioContext.resume();
+                    }
+                    isReady = true;
+                    updateStatus('🎵 全サウンドライブラリ準備完了！100種類以上の音をお楽しみください');
+                } catch (e) {
+                    updateStatus('❌ 音声システムの初期化に失敗しました');
+                }
+            }
+        }
+        
+        function updateStatus(message) {
+            document.getElementById('status').textContent = message;
+        }
+        
+        function flashButton(button) {
+            button.classList.add('playing');
+            setTimeout(() => button.classList.remove('playing'), 500);
+        }
+        
+        // 基本音作成
+        function createTone(frequency, duration, type = 'sine', volume = 0.3) {
+            if (!audioContext) return;
+            
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
+            oscillator.type = type;
+            
+            gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+            gainNode.gain.linearRampToValueAtTime(volume, audioContext.currentTime + 0.01);
+            gainNode.gain.linearRampToValueAtTime(0, audioContext.currentTime + duration);
+            
+            oscillator.start();
+            oscillator.stop(audioContext.currentTime + duration);
+        }
+        
+        // 和音作成
+        function createChord(frequencies, duration, type = 'sine', volume = 0.2) {
+            frequencies.forEach(freq => {
+                createTone(freq, duration, type, volume);
+            });
+        }
+        
+        // ノイズ生成
+        function createNoise(duration, volume = 0.3, filterType = 'lowpass', filterFreq = 1000) {
+            if (!audioContext) return;
+            
+            const bufferSize = audioContext.sampleRate * duration;
+            const noiseBuffer = audioContext.createBuffer(1, bufferSize, audioContext.sampleRate);
+            const output = noiseBuffer.getChannelData(0);
+            
+            for (let i = 0; i < bufferSize; i++) {
+                output[i] = Math.random() * 2 - 1;
+            }
+            
+            const noise = audioContext.createBufferSource();
+            const filter = audioContext.createBiquadFilter();
+            const gainNode = audioContext.createGain();
+            
+            noise.buffer = noiseBuffer;
+            filter.type = filterType;
+            filter.frequency.setValueAtTime(filterFreq, audioContext.currentTime);
+            
+            noise.connect(filter);
+            filter.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            gainNode.gain.setValueAtTime(volume, audioContext.currentTime);
+            gainNode.gain.linearRampToValueAtTime(0, audioContext.currentTime + duration);
+            
+            noise.start();
+        }
+        
+        // カテゴリ別再生関数
+        async function playWaveform(type) {
+            await init();
+            flashButton(event.target);
+            createTone(440, 1.0, type, 0.3);
+        }
+        
+        async function playInstrument(instrument) {
+            await init();
+            flashButton(event.target);
+            
+            switch(instrument) {
+                case 'piano':
+                    createChord([261.63, 329.63, 392.00], 2.0, 'sine', 0.25);
+                    break;
+                case 'guitar':
+                    [329.63, 369.99, 440, 493.88, 587.33].forEach((freq, i) => {
+                        setTimeout(() => createTone(freq, 0.8, 'sawtooth', 0.2), i * 150);
+                    });
+                    break;
+                case 'violin':
+                    createTone(659.25, 2.0, 'sawtooth', 0.3);
+                    setTimeout(() => createTone(783.99, 1.5, 'sawtooth', 0.25), 300);
+                    break;
+                case 'flute':
+                    createTone(523.25, 2.0, 'sine', 0.25);
+                    setTimeout(() => createTone(659.25, 1.0, 'sine', 0.2), 400);
+                    break;
+                case 'trumpet':
+                    [523.25, 659.25, 783.99, 1046.50].forEach((freq, i) => {
+                        setTimeout(() => createTone(freq, 0.4, 'sawtooth', 0.3), i * 200);
+                    });
+                    break;
+                case 'organ':
+                    createChord([130.81, 164.81, 196.00, 261.63], 3.0, 'sawtooth', 0.2);
+                    break;
+                case 'bells':
+                    [523.25, 659.25, 783.99].forEach((freq, i) => {
+                        setTimeout(() => {
+                            createTone(freq, 2.0, 'sine', 0.3);
+                            createTone(freq * 2, 1.5, 'sine', 0.1);
+                        }, i * 300);
+                    });
+                    break;
+                case 'harp':
+                    [261.63, 293.66, 329.63, 349.23, 392.00, 440, 493.88, 523.25].forEach((freq, i) => {
+                        setTimeout(() => createTone(freq, 1.5, 'sine', 0.25), i * 80);
+                    });
+                    break;
+                default:
+                    createTone(440, 1.0, 'sine', 0.3);
+            }
+        }
+        
+        async function playNature(nature) {
+            await init();
+            flashButton(event.target);
+            
+            switch(nature) {
+                case 'rain':
+                    createNoise(3.0, 0.3, 'highpass', 2000);
+                    break;
+                case 'thunder':
+                    createNoise(0.2, 0.8, 'lowpass', 100);
+                    setTimeout(() => createNoise(1.0, 0.4, 'lowpass', 200), 200);
+                    break;
+                case 'wind':
+                    createNoise(4.0, 0.25, 'bandpass', 500);
+                    break;
+                case 'ocean':
+                    for(let i = 0; i < 8; i++) {
+                        setTimeout(() => createNoise(1.0, 0.3, 'lowpass', 300 + i * 50), i * 500);
+                    }
+                    break;
+                case 'fire':
+                    for(let i = 0; i < 20; i++) {
+                        setTimeout(() => createNoise(0.1, Math.random() * 0.3, 'highpass', 1000 + Math.random() * 2000), i * 100);
+                    }
+                    break;
+                case 'birds':
+                    [800, 1200, 900, 1100].forEach((freq, i) => {
+                        setTimeout(() => createTone(freq, 0.3, 'sine', 0.2), i * 400);
+                    });
+                    break;
+                default:
+                    createNoise(2.0, 0.3);
+            }
+        }
+        
+        async function playElectronic(electronic) {
+            await init();
+            flashButton(event.target);
+            
+            switch(electronic) {
+                case 'laser':
+                    const laser = audioContext.createOscillator();
+                    const laserGain = audioContext.createGain();
+                    laser.connect(laserGain);
+                    laserGain.connect(audioContext.destination);
+                    
+                    laser.frequency.setValueAtTime(200, audioContext.currentTime);
+                    laser.frequency.exponentialRampToValueAtTime(2000, audioContext.currentTime + 0.3);
+                    laser.type = 'sawtooth';
+                    
+                    laserGain.gain.setValueAtTime(0.4, audioContext.currentTime);
+                    laserGain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+                    
+                    laser.start();
+                    laser.stop(audioContext.currentTime + 0.3);
+                    break;
+                    
+                case 'explosion':
+                    createNoise(0.1, 0.8, 'lowpass', 200);
+                    setTimeout(() => createNoise(0.5, 0.4, 'lowpass', 100), 100);
+                    break;
+                    
+                case 'teleport':
+                    for(let i = 0; i < 10; i++) {
+                        setTimeout(() => {
+                            createTone(200 + i * 100, 0.1, 'square', 0.3);
+                        }, i * 50);
+                    }
+                    break;
+                    
+                case 'robot':
+                    [300, 250, 350, 200].forEach((freq, i) => {
+                        setTimeout(() => createTone(freq, 0.2, 'square', 0.4), i * 200);
+                    });
+                    break;
+                    
+                default:
+                    createTone(800, 1.0, 'square', 0.3);
+            }
+        }
+        
+        async function playPercussion(perc) {
+            await init();
+            flashButton(event.target);
+            
+            switch(perc) {
+                case 'kick':
+                    createTone(60, 0.3, 'sine', 0.8);
+                    createNoise(0.1, 0.4, 'lowpass', 200);
+                    break;
+                case 'snare':
+                    createTone(200, 0.1, 'square', 0.3);
+                    createNoise(0.2, 0.5, 'highpass', 1000);
+                    break;
+                case 'hihat':
+                    createNoise(0.1, 0.3, 'highpass', 5000);
+                    break;
+                case 'cymbal':
+                    createNoise(1.0, 0.4, 'highpass', 3000);
+                    createTone(2000, 0.5, 'sine', 0.2);
+                    break;
+                default:
+                    createNoise(0.2, 0.4, 'bandpass', 1000);
+            }
+        }
+        
+        async function playAmbient(ambient) {
+            await init();
+            flashButton(event.target);
+            
+            switch(ambient) {
+                case 'pad':
+                    createChord([65.41, 98.00, 130.81, 164.81], 4.0, 'sine', 0.15);
+                    break;
+                case 'drone':
+                    createTone(55, 5.0, 'sine', 0.2);
+                    createTone(55 * 1.5, 5.0, 'sine', 0.1);
+                    break;
+                case 'ethereal':
+                    [261.63, 329.63, 392.00, 523.25].forEach((freq, i) => {
+                        setTimeout(() => createTone(freq, 3.0, 'sine', 0.1), i * 1000);
+                    });
+                    break;
+                default:
+                    createTone(110, 3.0, 'sine', 0.2);
+            }
+        }
+        
+        async function playVoice(voice) {
+            await init();
+            flashButton(event.target);
+            
+            switch(voice) {
+                case 'choir':
+                    createChord([196.00, 246.94, 293.66, 369.99], 3.0, 'sine', 0.2);
+                    break;
+                case 'whistle':
+                    [523.25, 587.33, 659.25, 698.46].forEach((freq, i) => {
+                        setTimeout(() => createTone(freq, 0.5, 'sine', 0.3), i * 300);
+                    });
+                    break;
+                case 'cat':
+                    createTone(800, 0.2, 'sawtooth', 0.3);
+                    setTimeout(() => createTone(600, 0.3, 'sawtooth', 0.2), 200);
+                    break;
+                default:
+                    createTone(440, 1.0, 'sine', 0.3);
+            }
+        }
+        
+        async function playSpecial(special) {
+            await init();
+            flashButton(event.target);
+            
+            switch(special) {
+                case 'sweep':
+                    const sweep = audioContext.createOscillator();
+                    const sweepGain = audioContext.createGain();
+                    sweep.connect(sweepGain);
+                    sweepGain.connect(audioContext.destination);
+                    
+                    sweep.frequency.setValueAtTime(100, audioContext.currentTime);
+                    sweep.frequency.exponentialRampToValueAtTime(2000, audioContext.currentTime + 2);
+                    sweep.type = 'sawtooth';
+                    
+                    sweepGain.gain.setValueAtTime(0.3, audioContext.currentTime);
+                    sweepGain.gain.linearRampToValueAtTime(0, audioContext.currentTime + 2);
+                    
+                    sweep.start();
+                    sweep.stop(audioContext.currentTime + 2);
+                    break;
+                    
+                case 'wobble':
+                    const wobble = audioContext.createOscillator();
+                    const wobbleGain = audioContext.createGain();
+                    const lfo = audioContext.createOscillator();
+                    
+                    wobble.connect(wobbleGain);
+                    wobbleGain.connect(audioContext.destination);
+                    
+                    lfo.frequency.setValueAtTime(5, audioContext.currentTime);
+                    lfo.connect(wobbleGain.gain);
+                    
+                    wobble.frequency.setValueAtTime(440, audioContext.currentTime);
+                    wobble.type = 'sawtooth';
+                    wobbleGain.gain.setValueAtTime(0.2, audioContext.currentTime);
+                    
+                    wobble.start();
+                    lfo.start();
+                    wobble.stop(audioContext.currentTime + 3);
+                    lfo.stop(audioContext.currentTime + 3);
+                    break;
+                    
+                default:
+                    createTone(440, 1.0, 'sine', 0.3);
+            }
+        }
+        
+        async function playCustomFreq() {
+            await init();
+            flashButton(event.target);
+            const freq = document.getElementById('freqSlider').value;
+            createTone(parseInt(freq), 1.0, 'sine', 0.3);
+        }
+        
+        // スライダー更新
+        document.getElementById('freqSlider').addEventListener('input', function(e) {
+            document.getElementById('freqValue').textContent = e.target.value + 'Hz';
+        });
+        
+        // 初期化イベント
+        document.addEventListener('click', init, { once: true });
+        
+        updateStatus('🎵 Web Audio API 全サウンドライブラリ - クリックして開始してください');
+    </script>
+</body>
+</html>

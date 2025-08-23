@@ -113,20 +113,59 @@ battle-rpg/
 ├── index.html      # メインHTMLファイル
 ├── style.css       # スタイルシート（アニメーション含む）
 ├── script.js       # メインゲームロジック
-├── sound.js        # サウンドシステム
+├── sound_fixed.js  # サウンドシステム
+├── effects.js      # 視覚エフェクト
+├── wait_for_actions.py  # GitHub Actions待機ツール
+├── wait-for-actions.sh  # GitHub Actions待機ツール(Bash)
 └── README.md       # このファイル
 ```
+
+### 🔧 開発ツール
+
+#### コード品質チェック
+```bash
+# JavaScript構文チェック
+npm run syntax-check
+
+# ESLint実行
+npm run lint
+
+# 全チェック実行
+npm run check
+```
+
+#### GitHub Actions 待機ツール
+コードをプッシュした後、CIの完了を自動で待機：
+
+```bash
+# Python版 (推奨)
+npm run wait-actions
+# または
+python3 wait_for_actions.py
+
+# Bash版
+npm run wait-actions-bash
+# または
+./wait-for-actions.sh
+```
+
+**機能:**
+- 30秒間隔でGitHub Actionsの状態をチェック
+- 成功/失敗/キャンセルを自動判定
+- 失敗時は詳細なエラー情報を表示
+- 最大30分まで待機（設定変更可能）
+- Ctrl+Cでいつでも中断可能
 
 ### クラス構造
 - `BattleRPG`: メインゲームクラス
 - `SoundManager`: 音響効果管理
-- `EnhancedBattleRPG`: サウンド統合クラス
+- `EffectsManager`: 視覚エフェクト管理
 
 ### 拡張可能性
 - 新しい戦闘システム（魔法属性、状態異常等）
 - インベントリシステム
 - マルチプレイヤー対応
-- セーブ・ロード機能
+- セーブ・ロード機能の拡張
 
 ---
 

@@ -20,8 +20,20 @@ jobs:
         
     - name: 🔧 Install dependencies
       run: |
-        npm install --save-dev playwright @playwright/test
+        npm install --save-dev playwright @playwright/test eslint
         npx playwright install chromium --with-deps
+        
+    - name: ✅ JavaScript Syntax & Quality Check
+      run: |
+        echo "🔍 Checking JavaScript syntax..."
+        node -c script.js || (echo "❌ Syntax error in script.js" && exit 1)
+        node -c effects.js || (echo "❌ Syntax error in effects.js" && exit 1)
+        node -c sound_fixed.js || (echo "❌ Syntax error in sound_fixed.js" && exit 1)
+        echo "✅ All JavaScript files have valid syntax"
+        
+        echo "🔍 Running ESLint checks..."
+        npx eslint script.js effects.js sound_fixed.js --no-ignore || (echo "⚠️ ESLint warnings found but continuing..." && true)
+        echo "✅ Code quality check completed"
         
     - name: 🌐 Start HTTP server
       run: |

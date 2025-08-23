@@ -194,7 +194,10 @@ class BattleRPG {
             flame_slash: { name: "火炎斬り", cost: 15, physicalPower: 1.2, magicalPower: 1.5, effect: "🔥⚔️", description: "炎を纏った斬撃", element: "fire", icon: "🔥⚔️", type: "combo", requiredPhysicalLevel: 2, requiredMagicalLevel: 2 },
             ice_arrow: { name: "氷矢", cost: 18, physicalPower: 1.1, magicalPower: 1.8, effect: "❄️🏹", description: "氷の魔力を込めた矢", element: "ice", icon: "❄️🏹", type: "combo", requiredPhysicalLevel: 3, requiredMagicalLevel: 2, requiredWeaponType: "ranged" },
             thunder_strike: { name: "雷鳴撃", cost: 22, physicalPower: 1.5, magicalPower: 2.0, effect: "⚡💥", description: "雷を纏った強打", element: "lightning", icon: "⚡💥", type: "combo", requiredPhysicalLevel: 3, requiredMagicalLevel: 3 },
-            holy_blade: { name: "聖剣術", cost: 25, physicalPower: 1.3, magicalPower: 2.2, effect: "✨⚔️", description: "聖なる力の剣技", element: "holy", icon: "✨⚔️", type: "combo", requiredPhysicalLevel: 4, requiredMagicalLevel: 3 }
+            holy_blade: { name: "聖剣術", cost: 25, physicalPower: 1.3, magicalPower: 2.2, effect: "✨⚔️", description: "聖なる力の剣技", element: "holy", icon: "✨⚔️", type: "combo", requiredPhysicalLevel: 4, requiredMagicalLevel: 3 },
+            
+            // 多連続攻撃スキル
+            multi_slash: { name: "多連続斬り", cost: 20, power: 0.4, hits: 10, effect: "⚔️💨", description: "10回連続の高速斬撃", element: "physical", icon: "⚔️💨", type: "multi_attack", requiredPhysicalLevel: 1 }
         };
 
         this.items = {
@@ -214,6 +217,14 @@ class BattleRPG {
             console.log('🎵 サウンドシステム有効');
         } else {
             console.warn('⚠️ サウンドシステムが読み込まれていません');
+        }
+
+        // エフェクトマネージャーを初期化
+        this.effectsManager = window.effectsManager || null;
+        if (this.effectsManager) {
+            console.log('🎨 爽快エフェクトシステム有効');
+        } else {
+            console.warn('⚠️ エフェクトシステムが読み込まれていません');
         }
 
         this.init();
@@ -408,6 +419,12 @@ class BattleRPG {
 
         this.animateCharacter('player', 'attacking');
         
+        // 🎨 超爽快エフェクト
+        if (this.effectsManager) {
+            const enemyElement = document.getElementById('enemy-character');
+            this.effectsManager.createWeaponEffect(this.player.currentWeapon, enemyElement, isCritical);
+        }
+        
         // 連続ヒット表示
         this.showMultiHitDamage(finalDamage, 'enemy', isCritical);
         this.showEffect('⚔️', 'enemy');
@@ -479,6 +496,17 @@ class BattleRPG {
             }
 
             this.animateCharacter('player', 'attacking');
+            
+            // 🎨 超爽快連携スキルエフェクト
+            if (this.effectsManager) {
+                const enemyElement = document.getElementById('enemy-character');
+                // 連携スキルは爆発エフェクト + スキル固有エフェクト
+                this.effectsManager.createExplosionEffect(enemyElement, 1.5);
+                setTimeout(() => {
+                    this.effectsManager.createSkillEffect(skill.element, enemyElement, true);
+                }, 300);
+            }
+            
             this.showDamageNumber(finalDamage, 'enemy', false);
             this.showEffect(skill.effect, 'enemy');
             
@@ -525,6 +553,13 @@ class BattleRPG {
             }
 
             this.animateCharacter('player', 'attacking');
+            
+            // 🎨 超爽快スキルエフェクト
+            if (this.effectsManager) {
+                const enemyElement = document.getElementById('enemy-character');
+                this.effectsManager.createSkillEffect(skillName, enemyElement, isCritical);
+            }
+            
             this.showDamageNumber(finalDamage, 'enemy', isCritical);
             this.showEffect(skill.effect, 'enemy');
             
@@ -537,6 +572,12 @@ class BattleRPG {
             
             // 魔法経験値獲得
             this.gainMagicalExp(1);
+        }
+        
+        if (skill.type === 'multi_attack') {
+            // 多連続攻撃処理
+            this.executeMultiSlashAttack(skill);
+            return; // 多連続攻撃は別処理で敵ターンに移行
         }
 
         this.updateUI();
@@ -590,6 +631,75 @@ class BattleRPG {
             this.victory();
         } else {
             this.nextTurn();
+        }
+    }
+
+    // 多連続斬り攻撃実行
+    executeMultiSlashAttack(skill) {
+        let totalDamage = 0;
+        let hitCount = 0;
+        const maxHits = skill.hits || 10;
+        
+        this.animateCharacter('player', 'attacking');
+        this.logMessage(`⚔️💨 ${skill.name}発動！連続斬撃開始！`);
+        
+        // 各斬撃を順次実行
+        for (let i = 0; i < maxHits; i++) {
+            setTimeout(() => {
+                if (this.enemy.hp <= 0) return; // 敵が倒れたら停止
+                
+                // 各斬撃のダメージ計算
+                const baseDamage = Math.floor(this.player.physicalAttack * skill.power);
+                const damage = this.calculatePhysicalDamage(baseDamage);
+                const isCritical = Math.random() < 0.25; // 25%クリティカル率
+                const finalDamage = isCritical ? Math.floor(damage * 1.5) : damage;
+                
+                // ダメージ適用
+                this.enemy.hp = Math.max(0, this.enemy.hp - finalDamage);
+                totalDamage += finalDamage;
+                hitCount++;
+                
+                // 斬撃エフェクト（サイズをランダム化）
+                if (this.effectsManager) {
+                    const enemyElement = document.getElementById('enemy-character');
+                    this.effectsManager.createSwordSlashEffect(enemyElement);
+                }
+                
+                // ダメージ数値表示（位置をランダム化）
+                this.showMultiHitDamageNumber(finalDamage, 'enemy', isCritical, i, maxHits);
+                
+                // 攻撃音（高速版）
+                if (this.soundManager) {
+                    this.soundManager.createTone(600 + i * 50, 0.05, 'sawtooth', 0.2);
+                }
+                
+                // 最後の斬撃後の処理
+                if (i === maxHits - 1 || this.enemy.hp <= 0) {
+                    setTimeout(() => {
+                        // 合計ダメージ表示
+                        this.showTotalMultiDamageNumber(totalDamage, hitCount, 'enemy');
+                        
+                        this.logMessage(`⚔️💨 ${skill.name}完了！${hitCount}撃で合計${totalDamage}ダメージ！`);
+                        
+                        // 大量コンボ増加
+                        this.player.combo += hitCount;
+                        if (this.player.combo > this.player.maxCombo) {
+                            this.player.maxCombo = this.player.combo;
+                        }
+                        
+                        // 物理経験値獲得
+                        this.gainPhysicalExp(hitCount);
+                        
+                        this.updateUI();
+                        
+                        if (this.enemy.hp <= 0) {
+                            this.victory();
+                        } else {
+                            this.nextTurn();
+                        }
+                    }, 300);
+                }
+            }, i * 120); // 120ms間隔で連続実行
         }
     }
 
@@ -988,7 +1098,12 @@ class BattleRPG {
         this.isPlayerTurn = true;
         this.player.isGuarding = false;
         this.player.combo = 0;
-        console.log('🔄 戦闘状態完全リセット完了');
+        
+        // 【修正】プレイヤーのHP/MPを完全回復
+        this.player.hp = this.player.maxHp;
+        this.player.mp = this.player.maxMp;
+        
+        console.log('🔄 戦闘状態完全リセット完了（HP/MP回復含む）');
         
         this.spawnNewEnemy();
         console.log('👹 新敵生成完了:', this.enemy.name);
@@ -1008,6 +1123,7 @@ class BattleRPG {
         }, 100);
         
         this.logMessage(`⚔️ 次の戦闘開始！${this.enemy.name}が現れた！`);
+        this.logMessage(`💚 HP・MPが全回復した！`);
         console.log('⚔️ 次戦闘処理完了');
     }
 
@@ -1396,6 +1512,71 @@ class BattleRPG {
                 damageArea.removeChild(totalDiv);
             }
         }, 2000);
+    }
+
+    // 多連続攻撃用のダメージ数値表示
+    showMultiHitDamageNumber(damage, target, isCritical, hitIndex, totalHits) {
+        const damageArea = document.getElementById('damage-area');
+        const damageDiv = document.createElement('div');
+        
+        damageDiv.className = `multi-hit-damage ${isCritical ? 'critical' : ''}`;
+        damageDiv.textContent = `-${damage}`;
+        
+        const targetElement = document.getElementById(`${target}-character`);
+        const rect = targetElement.getBoundingClientRect();
+        
+        // ランダムな位置にダメージ数値を配置
+        const offsetX = (Math.random() - 0.5) * 100;
+        const offsetY = (Math.random() - 0.5) * 60;
+        
+        damageDiv.style.left = `${rect.left + rect.width / 2 + offsetX}px`;
+        damageDiv.style.top = `${rect.top + rect.height / 2 + offsetY}px`;
+        
+        // サイズもランダム化（大小様々）
+        const sizeVariation = 0.8 + Math.random() * 0.8; // 0.8～1.6倍
+        damageDiv.style.fontSize = `${1.2 * sizeVariation}rem`;
+        
+        // 色も少し変化
+        const hue = 0 + Math.random() * 60; // 赤～橙の範囲
+        damageDiv.style.color = isCritical ? '#ff1493' : `hsl(${hue}, 70%, 50%)`;
+        
+        damageDiv.style.animation = 'multiSlashFloat 0.8s ease-out forwards';
+        
+        damageArea.appendChild(damageDiv);
+        
+        setTimeout(() => {
+            if (damageArea.contains(damageDiv)) {
+                damageArea.removeChild(damageDiv);
+            }
+        }, 800);
+    }
+    
+    // 多連続攻撃の合計ダメージ表示
+    showTotalMultiDamageNumber(totalDamage, hitCount, target) {
+        const damageArea = document.getElementById('damage-area');
+        const totalDiv = document.createElement('div');
+        
+        totalDiv.className = 'total-multi-damage';
+        totalDiv.textContent = `⚔️💨 ${hitCount}HIT! -${totalDamage}`;
+        
+        const targetElement = document.getElementById(`${target}-character`);
+        const rect = targetElement.getBoundingClientRect();
+        
+        totalDiv.style.left = `${rect.left + rect.width / 2}px`;
+        totalDiv.style.top = `${rect.top - 40}px`;
+        totalDiv.style.fontSize = '2.5rem';
+        totalDiv.style.fontWeight = 'bold';
+        totalDiv.style.color = '#ff6b6b';
+        totalDiv.style.textShadow = '2px 2px 4px rgba(0,0,0,0.8)';
+        totalDiv.style.animation = 'totalMultiDamageShow 2.5s ease-out forwards';
+        
+        damageArea.appendChild(totalDiv);
+        
+        setTimeout(() => {
+            if (damageArea.contains(totalDiv)) {
+                damageArea.removeChild(totalDiv);
+            }
+        }, 2500);
     }
 
     showEffect(effectChar, target) {

@@ -1,8 +1,10 @@
-// サウンドエフェクトシステム
+// サウンドエフェクトシステム（強化版）
 class SoundManager {
     constructor() {
         this.audioContext = null;
         this.isEnabled = false;
+        this.isUserInteracted = false;
+        this.debugMode = true;
         this.init();
     }
 
@@ -10,30 +12,57 @@ class SoundManager {
         try {
             this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
             this.isEnabled = true;
+            if (this.debugMode) {
+                console.log('🎵 AudioContext 作成成功', {
+                    state: this.audioContext.state,
+                    sampleRate: this.audioContext.sampleRate
+                });
+            }
         } catch (e) {
-            console.log('Web Audio API not supported');
+            console.error('❌ Web Audio API not supported:', e);
+            this.isEnabled = false;
         }
     }
 
-    // 基本的な音の生成
+    // 基本的な音の生成（強化版）
     createTone(frequency, duration, type = 'sine', volume = 0.3) {
-        if (!this.isEnabled || !this.audioContext) return;
+        if (!this.isEnabled || !this.audioContext) {
+            if (this.debugMode) console.warn('🔇 AudioContext無効', { enabled: this.isEnabled, context: !!this.audioContext });
+            return;
+        }
 
-        const oscillator = this.audioContext.createOscillator();
-        const gainNode = this.audioContext.createGain();
+        // AudioContext が suspended の場合の処理
+        if (this.audioContext.state === 'suspended') {
+            if (this.debugMode) console.warn('⏸️ AudioContext suspended - ユーザー操作が必要です');
+            this.resumeContext().then(() => {
+                // 再帰的に再実行
+                this.createTone(frequency, duration, type, volume);
+            });
+            return;
+        }
+
+            const oscillator = this.audioContext.createOscillator();
+            const gainNode = this.audioContext.createGain();
         
-        oscillator.connect(gainNode);
-        gainNode.connect(this.audioContext.destination);
+            oscillator.connect(gainNode);
+            gainNode.connect(this.audioContext.destination);
         
-        oscillator.frequency.setValueAtTime(frequency, this.audioContext.currentTime);
-        oscillator.type = type;
+            oscillator.frequency.setValueAtTime(frequency, this.audioContext.currentTime);
+            oscillator.type = type;
         
-        gainNode.gain.setValueAtTime(0, this.audioContext.currentTime);
-        gainNode.gain.linearRampToValueAtTime(volume, this.audioContext.currentTime + 0.01);
-        gainNode.gain.linearRampToValueAtTime(0, this.audioContext.currentTime + duration);
+            gainNode.gain.setValueAtTime(0, this.audioContext.currentTime);
+            gainNode.gain.linearRampToValueAtTime(volume, this.audioContext.currentTime + 0.01);
+            gainNode.gain.linearRampToValueAtTime(0, this.audioContext.currentTime + duration);
         
-        oscillator.start(this.audioContext.currentTime);
-        oscillator.stop(this.audioContext.currentTime + duration);
+            oscillator.start(this.audioContext.currentTime);
+            oscillator.stop(this.audioContext.currentTime + duration);
+            
+            if (this.debugMode) {
+                console.log('🎵 音声再生', { frequency, duration, type, volume, contextState: this.audioContext.state });
+            }
+        } catch (error) {
+            console.error('❌ 音声再生エラー:', error);
+        }
     }
 
     // 複数の音を重ねる
@@ -223,333 +252,84 @@ class SoundManager {
         }
     }
 
-    // AudioContextの再開（ユーザー操作後に必要）
+    // AudioContextの再開（ユーザー操作後に必要）（強化版）
     async resumeContext() {
-        if (this.audioContext && this.audioContext.state === 'suspended') {
-            await this.audioContext.resume();
+        if (!this.audioContext) {
+            if (this.debugMode) console.warn('🔇 AudioContext が存在しません - 再初期化を試行');
+            await this.init();
+            return;
+        }
+        
+        if (this.audioContext.state === 'suspended') {
+            try {
+                await this.audioContext.resume();
+                this.isUserInteracted = true;
+                if (this.debugMode) {
+                    console.log('🎵 AudioContext 再開成功', { 
+                        state: this.audioContext.state,
+                        userInteracted: this.isUserInteracted 
+                    });
+                }
+            } catch (error) {
+                console.error('❌ AudioContext 再開失敗:', error);
+            }
+        } else {
+            if (this.debugMode) {
+                console.log('🎵 AudioContext 状態', { state: this.audioContext.state });
+            }
         }
     }
 }
 
-// サウンドマネージャーのインスタンスを作成
+// サウンドマネージャーのインスタンスを作成（グローバル公開）
 const soundManager = new SoundManager();
+window.soundManager = soundManager; // グローバル公開
 
-// 最初のユーザー操作でAudioContextを開始
-document.addEventListener('click', () => {
-    soundManager.resumeContext();
-}, { once: true });
+// 最初のユーザー操作でAudioContextを開始（強化版）
+let audioInitialized = false;
+let initAttempts = 0;
+const maxInitAttempts = 5;
 
-// RPGクラスにサウンド機能を統合
-const originalBattleRPG = window.BattleRPG || class {};
-
-class EnhancedBattleRPG extends originalBattleRPG {
-    constructor() {
-        super();
-        this.soundManager = soundManager;
-        this.addSoundToActions();
+const initializeAudio = async (eventType) => {
+    initAttempts++;
+    if (soundManager.debugMode) {
+        console.log(`🎵 初期化試行 #${initAttempts} (${eventType})`);
     }
-
-    addSoundToActions() {
-        // ボタンにサウンドを追加
-        document.querySelectorAll('.action-btn').forEach(btn => {
-            btn.addEventListener('mouseenter', () => {
-                this.soundManager.playUISound('hover');
-            });
+    
+    if (!audioInitialized && initAttempts <= maxInitAttempts) {
+        try {
+            await soundManager.resumeContext();
+            audioInitialized = true;
+            console.log('🎵 AudioContext 初期化完了 via', eventType);
             
-            btn.addEventListener('click', () => {
-                this.soundManager.playUISound('click');
-            });
-        });
-
-        // スキルオプションにもサウンドを追加
-        document.querySelectorAll('.skill-option, .item-option').forEach(btn => {
-            btn.addEventListener('mouseenter', () => {
-                this.soundManager.playUISound('hover');
-            });
+            // テスト音を再生
+            setTimeout(() => {
+                soundManager.createTone(440, 0.1, 'sine', 0.1);
+            }, 100);
             
-            btn.addEventListener('click', () => {
-                this.soundManager.playUISound('click');
-            });
-        });
-    }
-
-    playerAttack() {
-        if (!this.canPlayerAct()) return;
-
-        const damage = this.calculateDamage(this.player.attack, this.enemy.defense);
-        const isCritical = Math.random() < 0.15 + (this.player.combo * 0.05);
-        const finalDamage = isCritical ? Math.floor(damage * 2) : damage;
-
-        // サウンド再生
-        if (isCritical) {
-            this.soundManager.playCriticalSound();
-        } else {
-            this.soundManager.playAttackSound();
-        }
-
-        this.player.combo++;
-        if (this.player.combo > this.player.maxCombo) {
-            this.player.maxCombo = this.player.combo;
-        }
-
-        // コンボ音
-        this.soundManager.playComboSound(this.player.combo);
-
-        this.animateCharacter('player', 'attacking');
-        this.showDamageNumber(finalDamage, 'enemy', isCritical);
-        this.showEffect('⚔️', 'enemy');
-
-        this.enemy.hp = Math.max(0, this.enemy.hp - finalDamage);
-
-        if (isCritical) {
-            this.logMessage(`💥 クリティカルヒット！ ${this.player.name}の攻撃で${finalDamage}ダメージ！(コンボ: ${this.player.combo})`);
-        } else {
-            this.logMessage(`⚔️ ${this.player.name}の攻撃で${finalDamage}ダメージ！(コンボ: ${this.player.combo})`);
-        }
-
-        this.updateUI();
-
-        if (this.enemy.hp <= 0) {
-            this.victory();
-        } else {
-            this.nextTurn();
+        } catch (error) {
+            console.error('❌ AudioContext 初期化失敗 via', eventType, error);
         }
     }
+};
 
-    useSkill(skillName) {
-        if (!this.canPlayerAct()) return;
-        
-        const skill = this.skills[skillName];
-        if (this.player.mp < skill.cost) {
-            this.soundManager.playUISound('error');
-            this.logMessage(`❌ MPが足りません！${skill.name}には${skill.cost}MP必要です。`);
-            return;
+// より多くのイベントで初期化を試行
+const events = ['click', 'keydown', 'keyup', 'mousedown', 'mouseup', 'touchstart', 'touchend'];
+events.forEach(eventType => {
+    document.addEventListener(eventType, () => initializeAudio(eventType), { once: false });
+});
+
+// ゲーム固有のボタンクリックでも初期化を試行
+setTimeout(() => {
+    const gameButtons = ['attack-btn', 'skill-btn', 'guard-btn', 'item-btn'];
+    gameButtons.forEach(buttonId => {
+        const button = document.getElementById(buttonId);
+        if (button) {
+            button.addEventListener('click', () => initializeAudio(`${buttonId}-click`), { once: false });
         }
+    });
+}, 1000);
 
-        // スキルサウンド再生
-        this.soundManager.playSkillSound(skillName);
-
-        this.player.mp -= skill.cost;
-        this.hideActionPanel();
-
-        if (skillName === 'heal') {
-            const healAmount = Math.floor(this.player.maxHp * skill.power * 0.5);
-            this.player.hp = Math.min(this.player.maxHp, this.player.hp + healAmount);
-            this.showDamageNumber(healAmount, 'player', false, true);
-            this.showEffect(skill.effect, 'player');
-            this.logMessage(`💚 ${skill.name}でHP ${healAmount}回復！`);
-        } else {
-            const baseDamage = Math.floor(this.player.attack * skill.power);
-            const damage = this.calculateDamage(baseDamage, this.enemy.defense);
-            const isCritical = Math.random() < 0.3;
-            const finalDamage = isCritical ? Math.floor(damage * 1.5) : damage;
-
-            this.player.combo += 2;
-            if (this.player.combo > this.player.maxCombo) {
-                this.player.maxCombo = this.player.combo;
-            }
-
-            // コンボ音
-            this.soundManager.playComboSound(this.player.combo);
-
-            this.animateCharacter('player', 'attacking');
-            this.showDamageNumber(finalDamage, 'enemy', isCritical);
-            this.showEffect(skill.effect, 'enemy');
-            
-            this.enemy.hp = Math.max(0, this.enemy.hp - finalDamage);
-
-            const critText = isCritical ? " クリティカル！" : "";
-            this.logMessage(`✨ ${skill.name}で${finalDamage}ダメージ！${critText}(コンボ: ${this.player.combo})`);
-        }
-
-        this.updateUI();
-
-        if (this.enemy.hp <= 0) {
-            this.victory();
-        } else {
-            this.nextTurn();
-        }
-    }
-
-    useItem(itemName) {
-        if (!this.canPlayerAct()) return;
-
-        const item = this.items[itemName];
-        if (item.count <= 0) {
-            this.soundManager.playUISound('error');
-            this.logMessage(`❌ ${item.name}がありません！`);
-            return;
-        }
-
-        // アイテムサウンド再生
-        this.soundManager.playItemSound(itemName);
-
-        item.count--;
-        this.hideActionPanel();
-
-        if (item.effect === 'heal') {
-            this.player.hp = Math.min(this.player.maxHp, this.player.hp + item.power);
-            this.showDamageNumber(item.power, 'player', false, true);
-            this.showEffect('💚', 'player');
-            this.logMessage(`🧪 ${item.name}でHP ${item.power}回復！`);
-        } else if (item.effect === 'mana') {
-            this.player.mp = Math.min(this.player.maxMp, this.player.mp + item.power);
-            this.showDamageNumber(item.power, 'player', false, true);
-            this.showEffect('💙', 'player');
-            this.logMessage(`💙 ${item.name}でMP ${item.power}回復！`);
-        } else if (item.effect === 'damage') {
-            const damage = this.calculateDamage(item.power, this.enemy.defense);
-            this.enemy.hp = Math.max(0, this.enemy.hp - damage);
-            this.showDamageNumber(damage, 'enemy', false);
-            this.showEffect('💣', 'enemy');
-            this.logMessage(`💣 ${item.name}で${damage}ダメージ！`);
-        }
-
-        this.updateUI();
-
-        if (this.enemy.hp <= 0) {
-            this.victory();
-        } else {
-            this.nextTurn();
-        }
-    }
-
-    playerGuard() {
-        if (!this.canPlayerAct()) return;
-
-        // ガードサウンド再生
-        this.soundManager.playGuardSound();
-
-        this.player.isGuarding = true;
-        this.animateCharacter('player', 'guarding');
-        this.logMessage(`🛡️ ${this.player.name}は防御の構えを取った！`);
-        
-        this.player.mp = Math.min(this.player.maxMp, this.player.mp + 5);
-        this.updateUI();
-        this.nextTurn();
-    }
-
-    enemyTurn() {
-        if (!this.isBattleActive) return;
-
-        setTimeout(() => {
-            const action = Math.random() < 0.8 ? 'attack' : 'special';
-            
-            if (action === 'attack') {
-                let damage = this.calculateDamage(this.enemy.attack, this.player.defense);
-                
-                if (this.player.isGuarding) {
-                    damage = Math.floor(damage * 0.5);
-                    this.logMessage(`🛡️ 防御により${damage}ダメージに軽減！`);
-                } else {
-                    if (this.player.combo > 0) {
-                        this.logMessage(`💔 コンボが途切れた！(最大コンボ: ${this.player.combo})`);
-                        this.player.combo = 0;
-                    }
-                }
-
-                // ダメージサウンド再生
-                this.soundManager.playDamageSound(false);
-
-                this.animateCharacter('enemy', 'attacking');
-                this.showDamageNumber(damage, 'player', false);
-                this.showEffect('💢', 'player');
-
-                this.player.hp = Math.max(0, this.player.hp - damage);
-                this.logMessage(`👹 ${this.enemy.name}の攻撃で${damage}ダメージ！`);
-            } else {
-                const specialDamage = Math.floor(this.enemy.attack * 1.5);
-                const damage = this.calculateDamage(specialDamage, this.player.defense);
-                
-                // 特殊攻撃サウンド
-                this.soundManager.playDamageSound(true);
-
-                this.animateCharacter('enemy', 'attacking');
-                this.showDamageNumber(damage, 'player', false);
-                this.showEffect('🔥', 'player');
-
-                this.player.hp = Math.max(0, this.player.hp - damage);
-                this.logMessage(`🔥 ${this.enemy.name}の特殊攻撃で${damage}ダメージ！`);
-                
-                if (this.player.combo > 0) {
-                    this.logMessage(`💔 コンボが途切れた！(最大コンボ: ${this.player.combo})`);
-                    this.player.combo = 0;
-                }
-            }
-
-            this.player.isGuarding = false;
-            this.updateUI();
-
-            if (this.player.hp <= 0) {
-                this.gameOver();
-            } else {
-                this.isPlayerTurn = true;
-                this.enablePlayerActions();
-            }
-        }, 1500);
-    }
-
-    victory() {
-        // 勝利サウンド再生
-        this.soundManager.playVictorySound();
-
-        this.isBattleActive = false;
-        this.gameState.score += this.enemy.gold;
-        this.gameState.exp += this.enemy.exp;
-        this.gameState.battleCount++;
-
-        let leveledUp = false;
-        while (this.gameState.exp >= this.gameState.expToNext) {
-            this.gameState.exp -= this.gameState.expToNext;
-            this.gameState.level++;
-            this.gameState.expToNext = Math.floor(this.gameState.expToNext * 1.2);
-            this.levelUp();
-            leveledUp = true;
-        }
-
-        const comboBonus = this.player.maxCombo > 5 ? Math.floor(this.enemy.gold * 0.2) : 0;
-        if (comboBonus > 0) {
-            this.gameState.score += comboBonus;
-        }
-
-        this.showResultScreen(true, leveledUp, comboBonus);
-        this.logMessage(`🎉 ${this.enemy.name}を倒した！経験値${this.enemy.exp}、ゴールド${this.enemy.gold}を獲得！`);
-        
-        if (comboBonus > 0) {
-            this.logMessage(`🔥 コンボボーナス！追加で${comboBonus}ゴールドを獲得！`);
-        }
-    }
-
-    levelUp() {
-        // レベルアップサウンド再生
-        this.soundManager.playLevelUpSound();
-
-        this.player.level++;
-        const hpIncrease = Math.floor(20 + Math.random() * 10);
-        const mpIncrease = Math.floor(10 + Math.random() * 5);
-        const attackIncrease = Math.floor(3 + Math.random() * 3);
-        const defenseIncrease = Math.floor(2 + Math.random() * 2);
-
-        this.player.maxHp += hpIncrease;
-        this.player.hp = this.player.maxHp;
-        this.player.maxMp += mpIncrease;
-        this.player.mp = this.player.maxMp;
-        this.player.attack += attackIncrease;
-        this.player.defense += defenseIncrease;
-
-        this.showEffect('⭐', 'player');
-        this.logMessage(`🌟 レベルアップ！HP+${hpIncrease}, MP+${mpIncrease}, 攻撃力+${attackIncrease}, 防御力+${defenseIncrease}`);
-    }
-
-    gameOver() {
-        // 敗北サウンド再生
-        this.soundManager.playDefeatSound();
-
-        this.isBattleActive = false;
-        this.showResultScreen(false, false, 0);
-        this.logMessage(`💀 ${this.player.name}は倒れた...`);
-    }
-}
-
-// 元のBattleRPGクラスを置き換え
-window.BattleRPG = EnhancedBattleRPG;
+// サウンドシステムを利用可能にするためのユーティリティ
+// (ゲームクラスは script.js で定義)
+console.log('🎵 サウンドシステム読み込み完了');

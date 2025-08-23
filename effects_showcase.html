@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎨 エフェクト一覧 - カスタム素材なし限界表現</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 100%);
+            color: white;
+            padding: 20px;
+            margin: 0;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            text-align: center;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            margin-bottom: 30px;
+            font-size: 2.5rem;
+        }
+        
+        .category {
+            background: rgba(255,255,255,0.1);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+            border-left: 5px solid #4CAF50;
+            backdrop-filter: blur(10px);
+        }
+        
+        .category h2 {
+            color: #4CAF50;
+            border-bottom: 2px solid #4CAF50;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .effects-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        
+        .effect-demo {
+            background: rgba(0,0,0,0.3);
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            border: 2px solid rgba(255,255,255,0.2);
+            transition: all 0.3s ease;
+        }
+        
+        .effect-demo:hover {
+            border-color: #4CAF50;
+            box-shadow: 0 0 20px rgba(76,175,80,0.3);
+        }
+        
+        .effect-button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 8px;
+            padding: 15px 30px;
+            color: white;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 10px;
+            width: 250px;
+        }
+        
+        .effect-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+        }
+        
+        .effect-button:active {
+            transform: translateY(0);
+        }
+        
+        .demo-area {
+            height: 200px;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            border-radius: 10px;
+            margin: 15px 0;
+            position: relative;
+            overflow: hidden;
+            border: 2px dashed rgba(255,255,255,0.3);
+        }
+        
+        .effect-description {
+            font-size: 14px;
+            color: #ccc;
+            margin-top: 10px;
+            line-height: 1.4;
+        }
+        
+        /* 既存のエフェクトCSS */
+        @keyframes sword-slash {
+            0% { transform: scale(0) rotate(-45deg); opacity: 0; }
+            20% { transform: scale(1.2) rotate(-30deg); opacity: 1; }
+            40% { transform: scale(1.5) rotate(-15deg); opacity: 0.8; }
+            60% { transform: scale(1.8) rotate(0deg); opacity: 0.6; }
+            100% { transform: scale(2.5) rotate(15deg); opacity: 0; }
+        }
+        
+        @keyframes explosion {
+            0% { transform: scale(0); opacity: 1; filter: hue-rotate(0deg) brightness(1); }
+            25% { transform: scale(0.8); opacity: 1; filter: hue-rotate(90deg) brightness(1.5); }
+            50% { transform: scale(1.5); opacity: 0.8; filter: hue-rotate(180deg) brightness(2); }
+            75% { transform: scale(2.2); opacity: 0.4; filter: hue-rotate(270deg) brightness(1.5); }
+            100% { transform: scale(3.0); opacity: 0; filter: hue-rotate(360deg) brightness(1); }
+        }
+        
+        @keyframes screen-shake {
+            0%, 100% { transform: translate(0px, 0px); }
+            10% { transform: translate(-3px, -2px); }
+            20% { transform: translate(3px, 2px); }
+            30% { transform: translate(-2px, 3px); }
+            40% { transform: translate(2px, -3px); }
+            50% { transform: translate(-3px, 2px); }
+            60% { transform: translate(3px, -2px); }
+            70% { transform: translate(-2px, -3px); }
+            80% { transform: translate(2px, 3px); }
+            90% { transform: translate(-3px, -2px); }
+        }
+        
+        @keyframes rainbow-pulse {
+            0% { filter: hue-rotate(0deg) saturate(1); }
+            25% { filter: hue-rotate(90deg) saturate(1.5); }
+            50% { filter: hue-rotate(180deg) saturate(2); }
+            75% { filter: hue-rotate(270deg) saturate(1.5); }
+            100% { filter: hue-rotate(360deg) saturate(1); }
+        }
+        
+        @keyframes spiral-spin {
+            0% { transform: scale(0) rotate(0deg); opacity: 0; }
+            50% { transform: scale(1.2) rotate(180deg); opacity: 1; }
+            100% { transform: scale(2) rotate(360deg); opacity: 0; }
+        }
+        
+        @keyframes wave-effect {
+            0% { transform: scaleX(0) scaleY(1); }
+            50% { transform: scaleX(1) scaleY(0.8); }
+            100% { transform: scaleX(2) scaleY(0.4); opacity: 0; }
+        }
+        
+        @keyframes flash-white {
+            0% { background: rgba(255,255,255,0); }
+            50% { background: rgba(255,255,255,0.4); }
+            100% { background: rgba(255,255,255,0); }
+        }
+        
+        @keyframes particles-burst {
+            0% { transform: scale(0) translate(0px, 0px); opacity: 1; }
+            50% { transform: scale(1) translate(var(--particle-x), var(--particle-y)); opacity: 0.8; }
+            100% { transform: scale(0.5) translate(calc(var(--particle-x) * 2), calc(var(--particle-y) * 2)); opacity: 0; }
+        }
+        
+        @keyframes lightning-strike {
+            0% { 
+                clip-path: polygon(50% 0%, 52% 20%, 48% 20%, 54% 40%, 46% 40%, 52% 60%, 48% 60%, 50% 80%, 52% 80%, 48% 100%, 46% 100%, 50% 0%);
+                opacity: 1;
+            }
+            50% { 
+                clip-path: polygon(48% 0%, 54% 25%, 46% 25%, 56% 45%, 44% 45%, 54% 65%, 46% 65%, 48% 85%, 54% 85%, 46% 100%, 48% 100%, 48% 0%);
+                opacity: 0.8;
+            }
+            100% { 
+                clip-path: polygon(50% 0%, 52% 20%, 48% 20%, 54% 40%, 46% 40%, 52% 60%, 48% 60%, 50% 80%, 52% 80%, 48% 100%, 46% 100%, 50% 0%);
+                opacity: 0;
+            }
+        }
+        
+        @keyframes ripple-effect {
+            0% {
+                width: 0px;
+                height: 0px;
+                opacity: 1;
+            }
+            100% {
+                width: 200px;
+                height: 200px;
+                opacity: 0;
+            }
+        }
+        
+        @keyframes morph-circle {
+            0% { border-radius: 0%; transform: rotate(0deg); }
+            25% { border-radius: 50% 0% 50% 0%; transform: rotate(90deg); }
+            50% { border-radius: 50%; transform: rotate(180deg); }
+            75% { border-radius: 0% 50% 0% 50%; transform: rotate(270deg); }
+            100% { border-radius: 0%; transform: rotate(360deg); }
+        }
+        
+        .effect-element {
+            position: absolute;
+            pointer-events: none;
+            z-index: 1000;
+        }
+        
+        .demo-target {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 40px;
+            background: rgba(255,255,255,0.1);
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid rgba(255,255,255,0.3);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎨 エフェクト一覧 - カスタム素材なし限界表現</h1>
+        
+        <!-- 基本エフェクト -->
+        <div class="category">
+            <h2>⚔️ 武器攻撃エフェクト</h2>
+            <div class="effects-grid">
+                <div class="effect-demo">
+                    <h3>剣攻撃エフェクト</h3>
+                    <div class="demo-area" id="sword-demo">
+                        <div class="demo-target">🛡️</div>
+                    </div>
+                    <button class="effect-button" onclick="demoSwordEffect()">⚔️ 剣撃デモ</button>
+                    <div class="effect-description">斬撃軌跡 + 回転拡大 + 血しぶき飛散</div>
+                </div>
+                
+                <div class="effect-demo">
+                    <h3>斧攻撃エフェクト</h3>
+                    <div class="demo-area" id="axe-demo">
+                        <div class="demo-target">🛡️</div>
+                    </div>
+                    <button class="effect-button" onclick="demoAxeEffect()">🪓 斧撃デモ</button>
+                    <div class="effect-description">大爆発 + 画面振動 + パーティクル飛散</div>
+                </div>
+                
+                <div class="effect-demo">
+                    <h3>弓攻撃エフェクト</h3>
+                    <div class="demo-area" id="bow-demo">
+                        <div class="demo-target">🛡️</div>
+                    </div>
+                    <button class="effect-button" onclick="demoBowEffect()">🏹 弓撃デモ</button>
+                    <div class="effect-description">矢の飛翔 → 着弾爆発の2段階演出</div>
+                </div>
+                
+                <div class="effect-demo">
+                    <h3>連続攻撃エフェクト</h3>
+                    <div class="demo-area" id="combo-demo">
+                        <div class="demo-target">🛡️</div>
+                    </div>
+                    <button class="effect-button" onclick="demoComboEffect()">🏏 連撃デモ</button>
+                    <div class="effect-description">3回連続打撃 + タイミングずらし</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- スキルエフェクト -->
+        <div class="category">
+            <h2>🔥 スキル・魔法エフェクト</h2>
+            <div class="effects-grid">
+                <div class="effect-demo">
+                    <h3>炎魔法エフェクト</h3>
+                    <div class="demo-area" id="fire-demo">
+                        <div class="demo-target">🛡️</div>
+                    </div>
+                    <button class="effect-button" onclick="demoFireEffect()">🔥 ファイア</button>
+                    <div class="effect-description">8個の炎アイコン + 虹色変化</div>
+                </div>
+                
+                <div class="effect-demo">
+                    <h3>雷魔法エフェクト</h3>
+                    <div class="demo-area" id="thunder-demo">
+                        <div class="demo-target">🛡️</div>
+                    </div>
+                    <button class="effect-button" onclick="demoThunderEffect()">⚡ サンダー</button>
+                    <div class="effect-description">稲妻クリップパス + フラッシュ + 強振動</div>
+                </div>
+                
+                <div class="effect-demo">
+                    <h3>氷魔法エフェクト</h3>
+                    <div class="demo-area" id="ice-demo">
+                        <div class="demo-target">🛡️</div>
+                    </div>
+                    <button class="effect-button" onclick="demoIceEffect()">❄️ ブリザード</button>
+                    <div class="effect-description">氷結晶の螺旋飛散 + 青色フィルター</div>
+                </div>
+                
+                <div class="effect-demo">
+                    <h3>回復魔法エフェクト</h3>
+                    <div class="demo-area" id="heal-demo">
+                        <div class="demo-target">💀</div>
+                    </div>
+                    <button class="effect-button" onclick="demoHealEffect()">✨ ヒール</button>
+                    <div class="effect-description">キラキラ上昇 + 緑光回復オーラ</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 高度なエフェクト -->
+        <div class="category">
+            <h2>🌟 高度なエフェクト</h2>
+            <div class="effects-grid">
+                <div class="effect-demo">
+                    <h3>爆発エフェクト</h3>
+                    <div class="demo-area" id="explosion-demo">
+                        <div class="demo-target">🛡️</div>
+                    </div>
+                    <button class="effect-button" onclick="demoExplosionEffect()">💥 大爆発</button>
+                    <div class="effect-description">拡大 + 色相回転 + 輝度変化</div>
+                </div>
+                
+                <div class="effect-demo">
+                    <h3>波動エフェクト</h3>
+                    <div class="demo-area" id="wave-demo">
+                        <div class="demo-target">🛡️</div>
+                    </div>
+                    <button class="effect-button" onclick="demoWaveEffect()">🌊 衝撃波</button>
+                    <div class="effect-description">同心円波動 + 透明度変化</div>
+                </div>
+                
+                <div class="effect-demo">
+                    <h3>変形エフェクト</h3>
+                    <div class="demo-area" id="morph-demo">
+                        <div class="demo-target">⬜</div>
+                    </div>
+                    <button class="effect-button" onclick="demoMorphEffect()">🔄 変形</button>
+                    <div class="effect-description">四角→円→四角の変形 + 回転</div>
+                </div>
+                
+                <div class="effect-demo">
+                    <h3>パーティクルバースト</h3>
+                    <div class="demo-area" id="particle-demo">
+                        <div class="demo-target">💎</div>
+                    </div>
+                    <button class="effect-button" onclick="demoParticleEffect()">✨ 粒子爆発</button>
+                    <div class="effect-description">20方向パーティクル + ランダム色</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 画面効果 -->
+        <div class="category">
+            <h2>📺 画面効果</h2>
+            <div class="effects-grid">
+                <div class="effect-demo">
+                    <h3>画面振動</h3>
+                    <div class="demo-area" id="shake-demo">
+                        <div class="demo-target">🎮</div>
+                    </div>
+                    <button class="effect-button" onclick="demoShakeEffect()">📳 振動</button>
+                    <div class="effect-description">XY軸ランダム振動パターン</div>
+                </div>
+                
+                <div class="effect-demo">
+                    <h3>フラッシュ効果</h3>
+                    <div class="demo-area" id="flash-demo">
+                        <div class="demo-target">💡</div>
+                    </div>
+                    <button class="effect-button" onclick="demoFlashEffect()">⚡ フラッシュ</button>
+                    <div class="effect-description">全画面白フラッシュ</div>
+                </div>
+                
+                <div class="effect-demo">
+                    <h3>レインボーパルス</h3>
+                    <div class="demo-area" id="rainbow-demo">
+                        <div class="demo-target">🌈</div>
+                    </div>
+                    <button class="effect-button" onclick="demoRainbowEffect()">🌈 レインボー</button>
+                    <div class="effect-description">色相回転 + 彩度変化</div>
+                </div>
+                
+                <div class="effect-demo">
+                    <h3>リップル効果</h3>
+                    <div class="demo-area" id="ripple-demo">
+                        <div class="demo-target">💧</div>
+                    </div>
+                    <button class="effect-button" onclick="demoRippleEffect()">〰️ 波紋</button>
+                    <div class="effect-description">水面波紋の拡散パターン</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // デモ用エフェクト関数群
+        
+        // 剣攻撃エフェクト
+        function demoSwordEffect() {
+            const demo = document.getElementById('sword-demo');
+            const target = demo.querySelector('.demo-target');
+            
+            // 斬撃軌跡
+            const trail = document.createElement('div');
+            trail.style.position = 'absolute';
+            trail.style.top = '50%';
+            trail.style.left = '20%';
+            trail.style.width = '0px';
+            trail.style.height = '4px';
+            trail.style.background = 'linear-gradient(45deg, transparent, #ff6b6b, #ffa500, transparent)';
+            trail.style.transform = 'rotate(-45deg)';
+            trail.style.animation = 'wave-effect 0.4s ease-out forwards';
+            demo.appendChild(trail);
+            
+            // 剣アイコン
+            setTimeout(() => {
+                const sword = document.createElement('div');
+                sword.style.position = 'absolute';
+                sword.style.top = '40%';
+                sword.style.left = '45%';
+                sword.textContent = '⚔️';
+                sword.style.fontSize = '60px';
+                sword.style.animation = 'sword-slash 0.6s ease-out forwards';
+                demo.appendChild(sword);
+                
+                setTimeout(() => sword.remove(), 600);
+            }, 100);
+            
+            // 血しぶき
+            setTimeout(() => {
+                for (let i = 0; i < 5; i++) {
+                    const blood = document.createElement('div');
+                    blood.style.position = 'absolute';
+                    blood.style.top = `${40 + Math.random() * 20}%`;
+                    blood.style.left = `${40 + Math.random() * 20}%`;
+                    blood.textContent = '🩸';
+                    blood.style.fontSize = '30px';
+                    blood.style.animation = `spiral-spin 0.8s ease-out ${Math.random() * 200}ms forwards`;
+                    demo.appendChild(blood);
+                    
+                    setTimeout(() => blood.remove(), 1000);
+                }
+            }, 300);
+            
+            setTimeout(() => trail.remove(), 400);
+        }
+        
+        // 斧攻撃エフェクト
+        function demoAxeEffect() {
+            const demo = document.getElementById('axe-demo');
+            
+            // 画面振動
+            demo.style.animation = 'screen-shake 0.6s ease-in-out';
+            
+            // 大爆発
+            const explosion = document.createElement('div');
+            explosion.style.position = 'absolute';
+            explosion.style.top = '30%';
+            explosion.style.left = '30%';
+            explosion.textContent = '💥';
+            explosion.style.fontSize = '100px';
+            explosion.style.animation = 'explosion 1s ease-out forwards';
+            demo.appendChild(explosion);
+            
+            // パーティクル飛散
+            setTimeout(() => {
+                for (let i = 0; i < 12; i++) {
+                    const particle = document.createElement('div');
+                    particle.style.position = 'absolute';
+                    particle.style.top = '50%';
+                    particle.style.left = '50%';
+                    particle.style.width = '8px';
+                    particle.style.height = '8px';
+                    particle.style.borderRadius = '50%';
+                    
+                    const colors = ['#ff6b6b', '#ffa500', '#ffff00', '#ff1493', '#00bfff'];
+                    particle.style.background = colors[Math.floor(Math.random() * colors.length)];
+                    
+                    const angle = (360 / 12) * i;
+                    const distance = 60;
+                    const x = Math.cos(angle * Math.PI / 180) * distance;
+                    const y = Math.sin(angle * Math.PI / 180) * distance;
+                    
+                    particle.style.setProperty('--particle-x', `${x}px`);
+                    particle.style.setProperty('--particle-y', `${y}px`);
+                    particle.style.animation = 'particles-burst 1.2s ease-out forwards';
+                    
+                    demo.appendChild(particle);
+                    
+                    setTimeout(() => particle.remove(), 1200);
+                }
+            }, 200);
+            
+            setTimeout(() => {
+                explosion.remove();
+                demo.style.animation = '';
+            }, 1000);
+        }
+        
+        // 弓攻撃エフェクト
+        function demoBowEffect() {
+            const demo = document.getElementById('bow-demo');
+            
+            // 矢が飛ぶ
+            const arrow = document.createElement('div');
+            arrow.style.position = 'absolute';
+            arrow.style.top = '50%';
+            arrow.style.left = '10%';
+            arrow.textContent = '🏹';
+            arrow.style.fontSize = '30px';
+            arrow.style.transition = 'all 0.5s ease-out';
+            demo.appendChild(arrow);
+            
+            // 矢の移動
+            setTimeout(() => {
+                arrow.style.left = '60%';
+                arrow.style.transform = 'rotate(45deg) scale(0.8)';
+            }, 50);
+            
+            // 着弾爆発
+            setTimeout(() => {
+                const explosion = document.createElement('div');
+                explosion.style.position = 'absolute';
+                explosion.style.top = '35%';
+                explosion.style.left = '55%';
+                explosion.textContent = '💥';
+                explosion.style.fontSize = '70px';
+                explosion.style.animation = 'explosion 0.8s ease-out forwards';
+                demo.appendChild(explosion);
+                
+                arrow.remove();
+                setTimeout(() => explosion.remove(), 800);
+            }, 500);
+        }
+        
+        // 連続攻撃エフェクト
+        function demoComboEffect() {
+            const demo = document.getElementById('combo-demo');
+            
+            for (let i = 0; i < 3; i++) {
+                setTimeout(() => {
+                    const hit = document.createElement('div');
+                    hit.style.position = 'absolute';
+                    hit.style.top = `${40 + i * 5}%`;
+                    hit.style.left = `${45 + i * 3}%`;
+                    hit.textContent = '💥';
+                    hit.style.fontSize = `${50 + i * 10}px`;
+                    hit.style.animation = 'explosion 0.6s ease-out forwards';
+                    demo.appendChild(hit);
+                    
+                    setTimeout(() => hit.remove(), 600);
+                }, i * 200);
+            }
+        }
+        
+        // 炎エフェクト
+        function demoFireEffect() {
+            const demo = document.getElementById('fire-demo');
+            
+            for (let i = 0; i < 8; i++) {
+                const flame = document.createElement('div');
+                flame.style.position = 'absolute';
+                flame.style.top = `${35 + Math.random() * 30}%`;
+                flame.style.left = `${35 + Math.random() * 30}%`;
+                flame.textContent = '🔥';
+                flame.style.fontSize = `${30 + Math.random() * 20}px`;
+                flame.style.animation = `rainbow-pulse 1s ease-out ${Math.random() * 300}ms forwards`;
+                demo.appendChild(flame);
+                
+                setTimeout(() => flame.remove(), 1300);
+            }
+        }
+        
+        // 雷エフェクト
+        function demoThunderEffect() {
+            const demo = document.getElementById('thunder-demo');
+            
+            // フラッシュ
+            const flash = document.createElement('div');
+            flash.style.position = 'absolute';
+            flash.style.top = '0';
+            flash.style.left = '0';
+            flash.style.right = '0';
+            flash.style.bottom = '0';
+            flash.style.animation = 'flash-white 0.3s ease-out';
+            demo.appendChild(flash);
+            
+            // 稲妻
+            const lightning = document.createElement('div');
+            lightning.style.position = 'absolute';
+            lightning.style.top = '0';
+            lightning.style.left = '45%';
+            lightning.style.width = '10px';
+            lightning.style.height = '100%';
+            lightning.style.background = 'linear-gradient(to bottom, #ffffff, #00bfff, #ffffff)';
+            lightning.style.animation = 'lightning-strike 0.6s ease-out forwards';
+            demo.appendChild(lightning);
+            
+            // 雷アイコン
+            const thunder = document.createElement('div');
+            thunder.style.position = 'absolute';
+            thunder.style.top = '20%';
+            thunder.style.left = '40%';
+            thunder.textContent = '⚡';
+            thunder.style.fontSize = '80px';
+            thunder.style.animation = 'explosion 0.6s ease-out forwards';
+            demo.appendChild(thunder);
+            
+            setTimeout(() => {
+                flash.remove();
+                lightning.remove();
+                thunder.remove();
+            }, 600);
+        }
+        
+        // 氷エフェクト
+        function demoIceEffect() {
+            const demo = document.getElementById('ice-demo');
+            
+            for (let i = 0; i < 6; i++) {
+                const ice = document.createElement('div');
+                ice.style.position = 'absolute';
+                ice.style.top = `${40 + Math.random() * 20}%`;
+                ice.style.left = `${40 + Math.random() * 20}%`;
+                ice.textContent = '❄️';
+                ice.style.fontSize = '35px';
+                ice.style.filter = 'hue-rotate(180deg) brightness(1.5)';
+                ice.style.animation = `spiral-spin 1.5s ease-out ${Math.random() * 500}ms forwards`;
+                demo.appendChild(ice);
+                
+                setTimeout(() => ice.remove(), 2000);
+            }
+        }
+        
+        // 回復エフェクト
+        function demoHealEffect() {
+            const demo = document.getElementById('heal-demo');
+            const target = demo.querySelector('.demo-target');
+            target.textContent = '😊';
+            
+            for (let i = 0; i < 6; i++) {
+                const sparkle = document.createElement('div');
+                sparkle.style.position = 'absolute';
+                sparkle.style.top = `${60 + Math.random() * 20}%`;
+                sparkle.style.left = `${40 + Math.random() * 20}%`;
+                sparkle.textContent = '✨';
+                sparkle.style.fontSize = '25px';
+                sparkle.style.setProperty('--particle-x', '0px');
+                sparkle.style.setProperty('--particle-y', '-80px');
+                sparkle.style.animation = `particles-burst 2s ease-out ${Math.random() * 400}ms forwards`;
+                sparkle.style.filter = 'hue-rotate(120deg) brightness(1.5)';
+                demo.appendChild(sparkle);
+                
+                setTimeout(() => sparkle.remove(), 2400);
+            }
+            
+            setTimeout(() => {
+                target.textContent = '💀';
+            }, 3000);
+        }
+        
+        // 爆発エフェクト
+        function demoExplosionEffect() {
+            const demo = document.getElementById('explosion-demo');
+            
+            const explosion = document.createElement('div');
+            explosion.style.position = 'absolute';
+            explosion.style.top = '25%';
+            explosion.style.left = '25%';
+            explosion.textContent = '💥';
+            explosion.style.fontSize = '120px';
+            explosion.style.animation = 'explosion 1.2s ease-out forwards';
+            demo.appendChild(explosion);
+            
+            setTimeout(() => explosion.remove(), 1200);
+        }
+        
+        // 波動エフェクト
+        function demoWaveEffect() {
+            const demo = document.getElementById('wave-demo');
+            
+            for (let i = 0; i < 3; i++) {
+                setTimeout(() => {
+                    const ripple = document.createElement('div');
+                    ripple.style.position = 'absolute';
+                    ripple.style.top = '50%';
+                    ripple.style.left = '50%';
+                    ripple.style.transform = 'translate(-50%, -50%)';
+                    ripple.style.border = '3px solid #4CAF50';
+                    ripple.style.borderRadius = '50%';
+                    ripple.style.animation = 'ripple-effect 1.5s ease-out forwards';
+                    demo.appendChild(ripple);
+                    
+                    setTimeout(() => ripple.remove(), 1500);
+                }, i * 300);
+            }
+        }
+        
+        // 変形エフェクト
+        function demoMorphEffect() {
+            const demo = document.getElementById('morph-demo');
+            const target = demo.querySelector('.demo-target');
+            
+            target.style.animation = 'morph-circle 2s ease-in-out forwards';
+            target.style.background = 'linear-gradient(45deg, #ff6b6b, #4ecdc4, #45b7d1, #96ceb4)';
+            
+            setTimeout(() => {
+                target.style.animation = '';
+                target.style.background = 'rgba(255,255,255,0.1)';
+            }, 2000);
+        }
+        
+        // パーティクルエフェクト
+        function demoParticleEffect() {
+            const demo = document.getElementById('particle-demo');
+            
+            for (let i = 0; i < 20; i++) {
+                const particle = document.createElement('div');
+                particle.style.position = 'absolute';
+                particle.style.top = '50%';
+                particle.style.left = '50%';
+                particle.style.width = '6px';
+                particle.style.height = '6px';
+                particle.style.borderRadius = '50%';
+                
+                const colors = ['#ff6b6b', '#ffa500', '#ffff00', '#ff1493', '#00bfff', '#32cd32', '#ff69b4', '#00fa9a'];
+                particle.style.background = colors[Math.floor(Math.random() * colors.length)];
+                
+                const angle = (360 / 20) * i + Math.random() * 18;
+                const distance = 40 + Math.random() * 40;
+                const x = Math.cos(angle * Math.PI / 180) * distance;
+                const y = Math.sin(angle * Math.PI / 180) * distance;
+                
+                particle.style.setProperty('--particle-x', `${x}px`);
+                particle.style.setProperty('--particle-y', `${y}px`);
+                particle.style.animation = 'particles-burst 1.5s ease-out forwards';
+                
+                demo.appendChild(particle);
+                
+                setTimeout(() => particle.remove(), 1500);
+            }
+        }
+        
+        // 画面振動エフェクト
+        function demoShakeEffect() {
+            const demo = document.getElementById('shake-demo');
+            demo.style.animation = 'screen-shake 1s ease-in-out';
+            
+            setTimeout(() => {
+                demo.style.animation = '';
+            }, 1000);
+        }
+        
+        // フラッシュエフェクト
+        function demoFlashEffect() {
+            const flash = document.createElement('div');
+            flash.style.position = 'fixed';
+            flash.style.top = '0';
+            flash.style.left = '0';
+            flash.style.right = '0';
+            flash.style.bottom = '0';
+            flash.style.animation = 'flash-white 0.4s ease-out';
+            flash.style.pointerEvents = 'none';
+            flash.style.zIndex = '9999';
+            document.body.appendChild(flash);
+            
+            setTimeout(() => flash.remove(), 400);
+        }
+        
+        // レインボーエフェクト
+        function demoRainbowEffect() {
+            const demo = document.getElementById('rainbow-demo');
+            const target = demo.querySelector('.demo-target');
+            
+            target.style.animation = 'rainbow-pulse 3s ease-in-out infinite';
+            
+            setTimeout(() => {
+                target.style.animation = '';
+            }, 6000);
+        }
+        
+        // リップルエフェクト
+        function demoRippleEffect() {
+            const demo = document.getElementById('ripple-demo');
+            
+            for (let i = 0; i < 5; i++) {
+                setTimeout(() => {
+                    const ripple = document.createElement('div');
+                    ripple.style.position = 'absolute';
+                    ripple.style.top = '50%';
+                    ripple.style.left = '50%';
+                    ripple.style.transform = 'translate(-50%, -50%)';
+                    ripple.style.border = `2px solid rgba(76, 175, 80, ${0.8 - i * 0.15})`;
+                    ripple.style.borderRadius = '50%';
+                    ripple.style.animation = 'ripple-effect 2s ease-out forwards';
+                    demo.appendChild(ripple);
+                    
+                    setTimeout(() => ripple.remove(), 2000);
+                }, i * 200);
+            }
+        }
+    </script>
+</body>
+</html>

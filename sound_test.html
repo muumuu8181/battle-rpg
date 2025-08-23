@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>音声テスト - Hello World</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #222;
+            color: white;
+        }
+        button {
+            padding: 20px 40px;
+            font-size: 18px;
+            margin: 10px;
+            cursor: pointer;
+            border: none;
+            border-radius: 8px;
+            background: #4CAF50;
+            color: white;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        #status {
+            margin: 20px 0;
+            padding: 10px;
+            background: #333;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🎵 音声テスト - Hello World</h1>
+    <div id="status">ステータス: 初期化待ち</div>
+    
+    <button id="testBtn">🔊 テスト音を再生</button>
+    <button id="beepBtn">📢 ビープ音</button>
+    <button id="chordBtn">🎵 和音</button>
+
+    <script>
+        // 最小限のAudioContext テスト
+        let audioContext = null;
+        let isReady = false;
+        
+        function updateStatus(message) {
+            document.getElementById('status').textContent = 'ステータス: ' + message;
+            console.log('🎵', message);
+        }
+        
+        async function initAudio() {
+            try {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                updateStatus(`AudioContext作成成功 (状態: ${audioContext.state})`);
+                
+                if (audioContext.state === 'suspended') {
+                    await audioContext.resume();
+                    updateStatus(`AudioContext再開完了 (状態: ${audioContext.state})`);
+                }
+                
+                isReady = true;
+                playTestSound(); // 初期化後すぐにテスト音
+                
+            } catch (error) {
+                updateStatus(`AudioContext作成失敗: ${error.message}`);
+            }
+        }
+        
+        function playTestSound() {
+            if (!isReady || !audioContext) {
+                updateStatus('AudioContextが準備されていません');
+                return;
+            }
+            
+            try {
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.frequency.setValueAtTime(440, audioContext.currentTime); // A4音
+                oscillator.type = 'sine';
+                
+                gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+                gainNode.gain.linearRampToValueAtTime(0.3, audioContext.currentTime + 0.01);
+                gainNode.gain.linearRampToValueAtTime(0, audioContext.currentTime + 0.5);
+                
+                oscillator.start(audioContext.currentTime);
+                oscillator.stop(audioContext.currentTime + 0.5);
+                
+                updateStatus('テスト音再生中... (440Hz, 0.5秒)');
+                
+            } catch (error) {
+                updateStatus(`音声再生エラー: ${error.message}`);
+            }
+        }
+        
+        function playBeep() {
+            if (!isReady || !audioContext) return;
+            
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+            oscillator.type = 'square';
+            
+            gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
+            gainNode.gain.linearRampToValueAtTime(0, audioContext.currentTime + 0.1);
+            
+            oscillator.start();
+            oscillator.stop(audioContext.currentTime + 0.1);
+            
+            updateStatus('ビープ音再生 (800Hz)');
+        }
+        
+        function playChord() {
+            if (!isReady || !audioContext) return;
+            
+            const frequencies = [261.63, 329.63, 392.00]; // C-E-G
+            
+            frequencies.forEach(freq => {
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.frequency.setValueAtTime(freq, audioContext.currentTime);
+                oscillator.type = 'sine';
+                
+                gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+                gainNode.gain.linearRampToValueAtTime(0, audioContext.currentTime + 1);
+                
+                oscillator.start();
+                oscillator.stop(audioContext.currentTime + 1);
+            });
+            
+            updateStatus('和音再生 (C-E-G)');
+        }
+        
+        // イベントリスナー
+        document.getElementById('testBtn').addEventListener('click', playTestSound);
+        document.getElementById('beepBtn').addEventListener('click', playBeep);
+        document.getElementById('chordBtn').addEventListener('click', playChord);
+        
+        // 最初のクリックで初期化
+        document.addEventListener('click', () => {
+            if (!isReady) {
+                initAudio();
+            }
+        }, { once: true });
+        
+        updateStatus('画面をクリックして音声システムを開始してください');
+    </script>
+</body>
+</html>
